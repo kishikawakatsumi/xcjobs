@@ -240,7 +240,9 @@ describe XCJobs::Xcodebuild do
           t.scheme = 'Example'
           t.configuration = 'Debug'
           t.signing_identity = signing_identity
-          # t.provisioning_profile = './spec/profiles/development.mobileprovision'
+          unless ENV['CI']
+            t.provisioning_profile = './spec/profiles/development.mobileprovision'
+          end
           t.build_dir = 'build'
         end
       end
@@ -271,8 +273,11 @@ describe XCJobs::Xcodebuild do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            # expect(@commands).to eq ['xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Debug -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Developer: Katsumi Kishikawa (9NXEJ2L8Q6) PROVISIONING_PROFILE=a55e7d27-6196-4994-ab9d-871d5d56b3fd']
-            expect(@commands).to eq ['xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Debug -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Developer: Katsumi Kishikawa (9NXEJ2L8Q6)']
+            if ENV['CI']
+              expect(@commands).to eq ['xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Debug -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Developer: Katsumi Kishikawa (9NXEJ2L8Q6)']
+            else
+              expect(@commands).to eq ['xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Debug -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Developer: Katsumi Kishikawa (9NXEJ2L8Q6) PROVISIONING_PROFILE=a55e7d27-6196-4994-ab9d-871d5d56b3fd']
+            end
           end
         end
       end
@@ -350,7 +355,9 @@ describe XCJobs::Xcodebuild do
           t.scheme = 'Example'
           t.configuration = 'Release'
           t.signing_identity = 'iPhone Distribution: kishikawa katsumi'
-          # t.provisioning_profile = 'spec/profiles/distribution.mobileprovision'
+          unless ENV['CI']
+            t.provisioning_profile = 'spec/profiles/distribution.mobileprovision'
+          end
           t.build_dir = 'build'
         end
       end
@@ -371,17 +378,19 @@ describe XCJobs::Xcodebuild do
         expect(task.signing_identity).to eq('iPhone Distribution: kishikawa katsumi')
       end
 
-      # it 'configures the provisioning profile' do
-      #   expect(task.provisioning_profile).to eq('spec/profiles/distribution.mobileprovision')
-      # end
-      #
-      # it 'configures the provisioning profile name' do
-      #   expect(task.provisioning_profile_name).to eq('Distribution Provisioning Profile')
-      # end
-      #
-      # it 'configures the provisioning profile UUID' do
-      #   expect(task.provisioning_profile_uuid).to eq('5d09b88d-ff09-43aa-a6fd-3907f98fe467')
-      # end
+      unless ENV['CI']
+        it 'configures the provisioning profile' do
+          expect(task.provisioning_profile).to eq('spec/profiles/distribution.mobileprovision')
+        end
+
+        it 'configures the provisioning profile name' do
+          expect(task.provisioning_profile_name).to eq('Distribution Provisioning Profile')
+        end
+
+        it 'configures the provisioning profile UUID' do
+          expect(task.provisioning_profile_uuid).to eq('5d09b88d-ff09-43aa-a6fd-3907f98fe467')
+        end
+      end
 
       it 'configures the build directory' do
         expect(task.build_dir).to eq('build')
@@ -393,11 +402,18 @@ describe XCJobs::Xcodebuild do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            expect(@commands).to eq [ 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi -archivePath build/Example',
-              # 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi PROVISIONING_PROFILE=5d09b88d-ff09-43aa-a6fd-3907f98fe467 -archivePath build/Example',
-              '(cd "build"; zip -ryq "dSYMs.zip" Example.xcarchive/dSYMs)',
-              '(cd "build"; zip -ryq Example.xcarchive.zip Example.xcarchive)',
-            ]
+
+            if ENV['CI']
+              expect(@commands).to eq [ 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi -archivePath build/Example',
+                '(cd "build"; zip -ryq "dSYMs.zip" Example.xcarchive/dSYMs)',
+                '(cd "build"; zip -ryq Example.xcarchive.zip Example.xcarchive)',
+              ]
+            else
+              expect(@commands).to eq [ 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi PROVISIONING_PROFILE=5d09b88d-ff09-43aa-a6fd-3907f98fe467 -archivePath build/Example',
+                '(cd "build"; zip -ryq "dSYMs.zip" Example.xcarchive/dSYMs)',
+                '(cd "build"; zip -ryq Example.xcarchive.zip Example.xcarchive)',
+              ]
+            end
           end
         end
       end
