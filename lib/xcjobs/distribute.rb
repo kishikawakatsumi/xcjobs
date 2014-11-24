@@ -1,15 +1,15 @@
-require "rake/tasklib"
+require 'rake/tasklib'
 
 module XCJobs
   module Distribute
     def upload(url, form_data = {})
       @before_action.call if @before_action
 
-      curl_options = ["curl", "-sSf", "#{url}"]
-      form_fields = form_data.flat_map { |k, v| ["-F", "#{k}=#{v}"] }
-      puts (curl_options + form_fields).join(" ")
+      curl_options = ['curl', '-sSf', "#{url}"]
+      form_fields = form_data.flat_map { |k, v| ['-F', "#{k}=#{v}"] }
+      puts (curl_options + form_fields).join(' ')
       Open3.popen2e(*(curl_options + form_fields)) do |stdin, stdout_err, wait_thr|
-        output = ""
+        output = ''
         while line = stdout_err.gets
           puts line
           output << line
@@ -53,9 +53,9 @@ module XCJobs
 
       def define
         namespace :distribute do
-          desc "upload IPA to TestFlight"
+          desc 'upload IPA to TestFlight'
           task :testflight do
-            upload("http://testflightapp.com/api/builds.json", form_data)
+            upload('http://testflightapp.com/api/builds.json', form_data)
           end
         end
       end
@@ -90,7 +90,7 @@ module XCJobs
 
       def define
         namespace :distribute do
-          desc "upload dSYMs to Crittercism"
+          desc 'upload dSYMs to Crittercism'
           task :crittercism do
             upload("https://api.crittercism.com/api_beta/dsym/#{app_id}", form_data)
           end

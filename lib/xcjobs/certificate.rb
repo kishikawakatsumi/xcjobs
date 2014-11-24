@@ -1,11 +1,10 @@
-require "rake/tasklib"
+require 'rake/tasklib'
 
 module XCJobs
   class Certificate < Rake::TaskLib
     include Rake::DSL if defined?(Rake::DSL)
 
     attr_accessor :keychain_name
-    attr_accessor :passphrase
 
     def initialize()
       @certificates = {}
@@ -14,9 +13,27 @@ module XCJobs
       define
     end
 
+    def keychain_name
+      @keychain_name || 'build.keychain'
+    end
+
+    def profile_dir
+      @profile_dir || '$HOME/Library/MobileDevice/Provisioning Profiles'
+    end
+
+    def add_certificate(certificate, passphrase='')
+      @certificates[certificate] = passphrase
+    end
+
+    def add_profile(profile)
+      @profiles << profile
+    end
+
+    private
+
     def define
       namespace :certificates do
-        desc "install certificates"
+        desc 'install certificates'
         task :install do
           sh %[security create-keychain -p "" "#{keychain_name}"]
 
@@ -27,14 +44,14 @@ module XCJobs
           sh %[security default-keychain -s "#{keychain_name}"]
         end
 
-        desc "remove certificates"
+        desc 'remove certificates'
         task :remove do
           sh %[security delete-keychain #{keychain_name}]
         end
       end
 
       namespace :profiles do
-        desc "install provisioning profiles"
+        desc 'install provisioning profiles'
         task :install do
           sh %[mkdir -p "#{profile_dir}"]
 
@@ -43,22 +60,6 @@ module XCJobs
           end
         end
       end
-    end
-
-    def keychain_name
-      @keychain_name || "build.keychain"
-    end
-
-    def add_certificate(certificate, passphrase="")
-      @certificates[certificate] = passphrase
-    end
-
-    def profile_dir
-      @profile_dir || "$HOME/Library/MobileDevice/Provisioning Profiles"
-    end
-
-    def add_profile(profile)
-      @profiles << profile
     end
   end
 end

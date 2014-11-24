@@ -14,6 +14,7 @@ module XCJobs
     def set(key, value, file = "#{path}")
       %x[/usr/libexec/PlistBuddy -c 'Set :#{key} "#{value}"' '#{file}'].strip
     end
+
     def []=(key, value)
       set(key, value)
     end
