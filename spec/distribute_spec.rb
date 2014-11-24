@@ -12,11 +12,84 @@ describe XCJobs::Distribute do
 
   let(:rake) { Rake::Application.new }
 
+  describe XCJobs::Distribute::TestFlight do
+    describe 'define upload ipa task' do
+      let(:credentials) do
+        { api_token: 'abcde12345efghi67890d543957972cd_MTE3NjUyMjBxMS0wOE0wNiAwMzwzMjoyNy41MTA3MzE',
+          team_token:'12345ab2692bd1c3093408a3399ee947_NDIzMDYyPDExLGExLTIwIDIxOjM9OjS2LjQxOTgzOA',
+        }
+      end
+
+      let(:file) do
+        File.join('build', 'Example.ipa')
+      end
+
+      let(:notes) { "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" }
+
+      let!(:task) do
+        XCJobs::Distribute::TestFlight.new do |t|
+          t.file = file
+          t.api_token = credentials['api_token']
+          t.team_token = credentials['team_token']
+          t.notify = true
+          t.replace = true
+          t.distribution_lists = 'Dev'
+          t.notes = notes
+        end
+      end
+
+      it 'configures the ipa file path' do
+        expect(task.file).to eq file
+      end
+
+      it 'configures the api_token' do
+        expect(task.api_token).to eq credentials['api_token']
+      end
+
+      it 'configures the team_token' do
+        expect(task.team_token).to eq credentials['team_token']
+      end
+
+      it 'configures the notify' do
+        expect(task.notify).to eq true
+      end
+
+      it 'configures the replace' do
+        expect(task.replace).to eq true
+      end
+
+      it 'configures the distribution_lists' do
+        expect(task.distribution_lists).to eq 'Dev'
+      end
+
+      it 'configures the notes' do
+        expect(task.notes).to eq notes
+      end
+
+      describe 'tasks' do
+        describe 'distribute:testflight' do
+          subject { Rake.application['distribute:testflight'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@url).to eq 'http://testflightapp.com/api/builds.json'
+            expect(@form_data).to eq({
+              file: "@#{file}",
+              notify: true,
+              replace: true,
+              distribution_lists: 'Dev',
+              notes: notes,
+            })
+          end
+        end
+      end
+    end
+  end
+
   describe XCJobs::Distribute::Crittercism do
     describe 'define upload dSYMs task' do
       let(:credentials) do
-        {
-          app_id: '123456789abcdefg12345678',
+        { app_id: '123456789abcdefg12345678',
           key:'abcdefghijklmnopqrstuvwxyz123456',
         }
       end
@@ -52,7 +125,7 @@ describe XCJobs::Distribute do
           it 'executes the appropriate commands' do
             subject.invoke
             expect(@url).to eq "https://api.crittercism.com/api_beta/dsym/#{credentials['app_id']}"
-            expect(@form_data).to eq ({ dsym: "@#{dsym_file}" })
+            expect(@form_data).to eq({ dsym: "@#{dsym_file}" })
           end
         end
       end
