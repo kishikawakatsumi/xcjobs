@@ -1,4 +1,4 @@
-# XCJobs
+# XCJobs [![Build Status](https://travis-ci.org/kishikawakatsumi/xcjobs.svg?branch=master)](https://travis-ci.org/kishikawakatsumi/xcjobs) [![Coverage Status](https://img.shields.io/coveralls/kishikawakatsumi/xcjobs.svg)](https://coveralls.io/r/kishikawakatsumi/xcjobs?branch=master)
 
 Support the automation of release process of iOS/OSX apps with CI
 
