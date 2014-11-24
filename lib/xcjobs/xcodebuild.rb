@@ -85,7 +85,6 @@ module XCJobs
         opts.concat(["-scheme", scheme]) if scheme
         opts.concat(["-sdk", sdk]) if sdk
         opts.concat(["-configuration", configuration]) if configuration
-        opts.concat(["-archivePath", File.join(build_dir, scheme)]) if build_dir && scheme
         opts.concat(["-derivedDataPath", build_dir]) if build_dir
 
         @destinations.each do |destination|
@@ -119,7 +118,7 @@ module XCJobs
     end
 
     def sdk
-      "iphonesimulator" || @sdk
+      @sdk || "iphonesimulator"
     end
   end
 
@@ -147,6 +146,8 @@ module XCJobs
   end
 
   class Archive < Xcodebuild
+    attr_accessor :archivePath
+
     def initialize(name = :archive)
       super
       yield self if block_given?
@@ -172,11 +173,21 @@ module XCJobs
         end
       end
     end
+
+    def archivePath
+      @archivePath || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+    end
+
+    def options
+      super.tap do |opts|
+        opts.concat(["-archivePath", archivePath]) if archivePath
+      end
+    end
   end
 
   class Export < Xcodebuild
-    attr_accessor :exportFormat
     attr_accessor :archivePath
+    attr_accessor :exportFormat
     attr_accessor :exportPath
     attr_accessor :exportProvisioningProfile
     attr_accessor :exportSigningIdentity
@@ -200,10 +211,14 @@ module XCJobs
       end
     end
 
+    def archivePath
+      @archivePath || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+    end
+
     def options
       [].tap do |opts|
-        opts.concat(["-exportFormat", exportFormat || "IPA"])
         opts.concat(["-archivePath", archivePath]) if archivePath
+        opts.concat(["-exportFormat", exportFormat || "IPA"])
         opts.concat(["-exportPath", exportPath]) if exportPath
         opts.concat(["-exportProvisioningProfile", exportProvisioningProfile]) if exportProvisioningProfile
         opts.concat(["-exportSigningIdentity", exportSigningIdentity]) if exportSigningIdentity

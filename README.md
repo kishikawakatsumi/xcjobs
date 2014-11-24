@@ -67,7 +67,7 @@ rake build                      # build application
 ```shell
 $ rake build
 
-xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Release -archivePath build/Example -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi
+xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi
 ```
 
 ### Export IPA from xcarchive
