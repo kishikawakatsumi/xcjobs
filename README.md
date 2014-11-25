@@ -193,7 +193,7 @@ source 'https://rubygems.org'
 gem 'rake'
 gem 'cocoapods'
 gem 'xcpretty'
-gem 'xcjobs', :github => 'kishikawakatsumi/xcjobs'
+gem 'xcjobs'
 ```
 
 ```yaml
