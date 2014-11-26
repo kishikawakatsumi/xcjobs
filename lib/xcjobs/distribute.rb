@@ -104,5 +104,35 @@ module XCJobs
         end
       end
     end
+
+    class ITC < Rake::TaskLib
+      include Rake::DSL if defined?(Rake::DSL)
+      include Distribute
+
+      attr_accessor :file
+      attr_accessor :username
+      attr_accessor :password
+      attr_accessor :altool
+
+      def initialize(name=:export)
+        yield self if block_given?
+        define
+      end
+
+      def altool
+        @altool || '/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Support/altool'
+      end
+
+      private
+
+      def define
+        namespace :distribute do
+          desc 'upload ipa to iTunes Connect'
+          task :itc do
+            sh %["#{altool}" --upload-app --file "#{file}" --username #{username} --password #{password}]
+          end
+        end
+      end
+    end
   end
 end
