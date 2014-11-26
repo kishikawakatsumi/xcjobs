@@ -2,6 +2,12 @@ require 'spec_helper'
 
 describe XCJobs::Distribute do
   before(:each) do
+    @commands = []
+
+    allow_any_instance_of(FileUtils).to receive(:sh) do |object, command|
+      @commands << command
+    end
+
     allow_any_instance_of(XCJobs::Distribute).to receive(:upload) do |object, url, form_data|
       @url = url
       @form_data = form_data
@@ -126,6 +132,53 @@ describe XCJobs::Distribute do
             subject.invoke
             expect(@url).to eq "https://api.crittercism.com/api_beta/dsym/#{credentials['app_id']}"
             expect(@form_data).to eq({ dsym: "@#{dsym_file}" })
+          end
+        end
+      end
+    end
+  end
+
+  describe XCJobs::Distribute::ITC do
+    describe 'define upload ipa task' do
+      let(:credentials) do
+        { username: 'kishikawakatsumi',
+          password:'password1234',
+        }
+      end
+
+      let(:file) do
+        File.join('build', 'Example.ipa')
+      end
+
+      let(:altool) { '/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Support/altool' }
+
+      let!(:task) do
+        XCJobs::Distribute::ITC.new do |t|
+          t.username = credentials['username']
+          t.password = credentials['password']
+          t.file = file
+        end
+      end
+
+      it 'configures the username' do
+        expect(task.username).to eq credentials['username']
+      end
+
+      it 'configures the password' do
+        expect(task.password).to eq credentials['password']
+      end
+
+      it 'configures the file path' do
+        expect(task.file).to eq file
+      end
+
+      describe 'tasks' do
+        describe 'distribute:itc' do
+          subject { Rake.application['distribute:itc'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@commands).to eq [%["#{altool}" --upload-app --file "#{file}" --username #{credentials['username']} --password #{credentials['password']}]]
           end
         end
       end
