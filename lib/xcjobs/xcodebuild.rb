@@ -70,7 +70,11 @@ module XCJobs
     def run(cmd)
       @before_action.call if @before_action
 
-      puts cmd.join(" ")
+      if @formatter
+        puts (cmd + ['|', @formatter]).join(" ")
+      else
+        puts cmd.join(" ")
+      end
 
       if @formatter
         Open3.pipeline_r(cmd, [@formatter]) do |stdout, wait_thrs|
