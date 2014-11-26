@@ -1,4 +1,4 @@
-require "rake/tasklib"
+require 'rake/tasklib'
 
 module XCJobs
   module InfoPlist
@@ -19,20 +19,20 @@ module XCJobs
       set(key, value)
     end
 
-    def build_version
-      self['CFBundleVersion']
-    end
-
-    def build_version=(revision)
-      self['CFBundleVersion'] = revision
-    end
-
     def marketing_version
       self['CFBundleShortVersionString']
     end
 
     def marketing_version=(version)
       self['CFBundleShortVersionString'] = version
+    end
+
+    def build_version
+      self['CFBundleVersion']
+    end
+
+    def build_version=(revision)
+      self['CFBundleVersion'] = revision
     end
 
     def bump_marketing_version_segment(segment_index)
@@ -53,6 +53,7 @@ module XCJobs
   module InfoPlist
     class Version < Rake::TaskLib
       include Rake::DSL if defined?(Rake::DSL)
+      include InfoPlist
 
       def initialize()
         yield self if block_given?
@@ -69,45 +70,45 @@ module XCJobs
 
       def define
         namespace :version do
-          desc "Print the current version"
+          desc 'Print the current version'
           task :current do
             puts InfoPlist.marketing_and_build_version
           end
 
-          desc "Sets build version to last git commit hash"
+          desc 'Sets build version to last git commit hash'
           task :set_build_version do
-            rev = `git rev-parse --short HEAD`.strip
+            rev = %x[git rev-parse --short HEAD].strip
             puts "Setting build version to: #{rev}"
             InfoPlist.build_version = rev
           end
 
-          desc "Sets build version to number of commits"
+          desc 'Sets build version to number of commits'
           task :set_build_number do
-            rev = `git rev-list --count HEAD`.strip
+            rev = %x[git rev-list --count HEAD].strip
             puts "Setting build version to: #{rev}"
             InfoPlist.build_version = rev
           end
 
           namespace :bump do
-            desc "Bump patch version (0.0.X)"
+            desc 'Bump patch version (0.0.X)'
             task :patch do
               InfoPlist.bump_marketing_version_segment(2)
             end
 
-            desc "Bump minor version (0.X.0)"
+            desc 'Bump minor version (0.X.0)'
             task :minor do
               InfoPlist.bump_marketing_version_segment(1)
             end
 
-            desc "Bump major version (X.0.0)"
+            desc 'Bump major version (X.0.0)'
             task :major do
               InfoPlist.bump_marketing_version_segment(0)
             end
           end
         end
 
-        desc "Print the current version"
-        task :version => "version:current"
+        desc 'Print the current version'
+        task :version => 'version:current'
       end
     end
   end
