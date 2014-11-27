@@ -1,5 +1,6 @@
 require 'rake/tasklib'
 require 'rake/clean'
+require 'open3'
 
 module XCJobs
   class Xcodebuild < Rake::TaskLib
