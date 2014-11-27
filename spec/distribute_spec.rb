@@ -1,4 +1,5 @@
 require 'spec_helper'
+require 'date'
 
 describe XCJobs::Distribute do
   before(:each) do
