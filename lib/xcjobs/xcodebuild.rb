@@ -189,7 +189,7 @@ module XCJobs
   end
 
   class Archive < Xcodebuild
-    attr_accessor :archivePath
+    attr_accessor :archive_path
 
     def initialize(name = :archive)
       super
@@ -221,25 +221,25 @@ module XCJobs
       end
     end
 
-    def archivePath
-      @archivePath || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+    def archive_path
+      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
     end
 
     def options
       super.tap do |opts|
-        opts.concat(['-archivePath', archivePath]) if archivePath
+        opts.concat(['-archivePath', archive_path]) if archive_path
       end
     end
   end
 
   class Export < Xcodebuild
-    attr_accessor :archivePath
-    attr_accessor :exportFormat
-    attr_accessor :exportPath
-    attr_accessor :exportProvisioningProfile
-    attr_accessor :exportSigningIdentity
-    attr_accessor :exportInstallerIdentity
-    attr_accessor :exportWithOriginalSigningIdentity
+    attr_accessor :archive_path
+    attr_accessor :export_format
+    attr_accessor :export_path
+    attr_accessor :export_provisioning_profile
+    attr_accessor :export_signing_identity
+    attr_accessor :export_installer_identity
+    attr_accessor :export_with_original_signing_identity
 
     def initialize(name = :export)
       super
@@ -258,23 +258,23 @@ module XCJobs
       end
     end
 
-    def archivePath
-      @archivePath || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+    def archive_path
+      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
     end
 
-    def exportFormat
-      @exportFormat || 'IPA'
+    def export_format
+      @export_format || 'IPA'
     end
 
     def options
       [].tap do |opts|
-        opts.concat(['-archivePath', archivePath]) if archivePath
-        opts.concat(['-exportFormat', exportFormat])  if exportFormat
-        opts.concat(['-exportPath', exportPath]) if exportPath
-        opts.concat(['-exportProvisioningProfile', exportProvisioningProfile]) if exportProvisioningProfile
-        opts.concat(['-exportSigningIdentity', exportSigningIdentity]) if exportSigningIdentity
-        opts.concat(['-exportInstallerIdentity', exportInstallerIdentity]) if exportInstallerIdentity
-        opts.concat(['-exportWithOriginalSigningIdentity']) if exportWithOriginalSigningIdentity
+        opts.concat(['-archivePath', archive_path]) if archive_path
+        opts.concat(['-exportFormat', export_format])  if export_format
+        opts.concat(['-exportPath', export_path]) if export_path
+        opts.concat(['-exportProvisioningProfile', export_provisioning_profile]) if export_provisioning_profile
+        opts.concat(['-exportSigningIdentity', export_signing_identity]) if export_signing_identity
+        opts.concat(['-exportInstallerIdentity', export_installer_identity]) if export_installer_identity
+        opts.concat(['-exportWithOriginalSigningIdentity']) if export_with_original_signing_identity
       end
     end
   end
