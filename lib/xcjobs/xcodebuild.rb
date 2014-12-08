@@ -174,8 +174,8 @@ module XCJobs
       raise 'the scheme is required when specifying build_dir' if build_dir && !scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
-      CLEAN.include(build_dir)
-      CLOBBER.include(build_dir)
+      CLEAN.include(build_dir) if build_dir
+      CLOBBER.include(build_dir) if build_dir
 
       desc 'build application'
       task @name do
@@ -203,8 +203,8 @@ module XCJobs
       raise 'archive action requires specifying a scheme' unless scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
-      CLEAN.include(build_dir)
-      CLOBBER.include(build_dir)
+      CLEAN.include(build_dir) if build_dir
+      CLOBBER.include(build_dir) if build_dir
 
       desc 'make xcarchive'
       namespace :build do
