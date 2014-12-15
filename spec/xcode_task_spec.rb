@@ -24,11 +24,11 @@ describe XCJobs::Task do
   describe XCJobs::Task::Test do
     context 'when a scheme is not specified' do
       subject do
-        t = XCJobs::Task::Test.define_task do |t|
+        task = XCJobs::Task::Test.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -38,13 +38,13 @@ describe XCJobs::Task do
 
     context 'when both scheme and targets specified' do
       subject do
-        t = XCJobs::Task::Test.define_task do |t|
+        task = XCJobs::Task::Test.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -54,12 +54,12 @@ describe XCJobs::Task do
 
     context 'When no file extension (project)' do
       let!(:task) do
-        t = XCJobs::Task::Test.define_task do |t|
+        task = XCJobs::Task::Test.define_task do |t|
           t.project = 'Project'
           t.scheme = 'Scheme'
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'Automatically complemented' do
@@ -69,12 +69,12 @@ describe XCJobs::Task do
 
     context 'When no file extension (workspace)' do
       let!(:task) do
-        t = XCJobs::Task::Test.define_task do |t|
+        task = XCJobs::Task::Test.define_task do |t|
           t.workspace = 'Workspace'
           t.scheme = 'Scheme'
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'Automatically complemented' do
@@ -84,7 +84,7 @@ describe XCJobs::Task do
 
     describe 'test project with simulator' do
       let!(:task) do
-        t = XCJobs::Task::Test.define_task :test do |t|
+        task = XCJobs::Task::Test.define_task :test do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.configuration = 'Debug'
@@ -93,8 +93,8 @@ describe XCJobs::Task do
           end
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the project' do
@@ -123,7 +123,7 @@ describe XCJobs::Task do
 
     describe 'test workspace with simulator' do
       let!(:task) do
-        t = XCJobs::Task::Test.define_task :test do |t|
+        task = XCJobs::Task::Test.define_task :test do |t|
           t.workspace = 'Example.xcworkspace'
           t.scheme = 'Example'
           t.configuration = 'Debug'
@@ -132,8 +132,8 @@ describe XCJobs::Task do
           end
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the workspace' do
@@ -168,7 +168,7 @@ describe XCJobs::Task do
       let(:destination) { 'platform=iOS,id=8d18c8c4d1a6988ac4a70d370bfcbe99fef3f7b5' }
 
       let!(:task) do
-        t = XCJobs::Task::Test.define_task :test do |t|
+        task = XCJobs::Task::Test.define_task :test do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.configuration = 'Debug'
@@ -176,8 +176,8 @@ describe XCJobs::Task do
           t.add_destination(destination)
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the project' do
@@ -216,12 +216,12 @@ describe XCJobs::Task do
   describe XCJobs::Task::Build do
     context 'when specifying build_dir' do
       subject do
-        t = XCJobs::Task::Build.define_task do |t|
+        task = XCJobs::Task::Build.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.build_dir = 'build'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -231,13 +231,13 @@ describe XCJobs::Task do
 
     context 'when both scheme and targets specified' do
       subject do
-        t = XCJobs::Task::Build.define_task do |t|
+        task = XCJobs::Task::Build.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -247,14 +247,14 @@ describe XCJobs::Task do
 
     describe 'simple task with a project' do
       let!(:task) do
-        t = XCJobs::Task::Build.define_task :build do |t|
+        task = XCJobs::Task::Build.define_task :build do |t|
           t.project = 'Example.xcodeproj'
           t.target = 'Example'
           t.configuration = 'Release'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the project' do
@@ -285,7 +285,7 @@ describe XCJobs::Task do
       let(:signing_identity) { 'iPhone Developer: Katsumi Kishikawa (9NXEJ2L8Q6)' }
 
       let!(:task) do
-        t = XCJobs::Task::Build.define_task :build do |t|
+        task = XCJobs::Task::Build.define_task :build do |t|
           t.workspace = 'Example.xcworkspace'
           t.scheme = 'Example'
           t.configuration = 'Debug'
@@ -296,8 +296,8 @@ describe XCJobs::Task do
           t.build_dir = 'build'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the workspace' do
@@ -340,11 +340,11 @@ describe XCJobs::Task do
   describe XCJobs::Task::Archive do
     context 'when a scheme is not specified' do
       subject do
-        t = XCJobs::Task::Archive.define_task do |t|
+        task = XCJobs::Task::Archive.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -354,13 +354,13 @@ describe XCJobs::Task do
 
     context 'when both scheme and targets specified' do
       subject do
-        t = XCJobs::Task::Archive.define_task do |t|
+        task = XCJobs::Task::Archive.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
           t.run
         end
-        t.invoke
+        task.invoke
       end
 
       it 'fails' do
@@ -370,15 +370,15 @@ describe XCJobs::Task do
 
     describe 'simple task with a project' do
       let!(:task) do
-        t = XCJobs::Task::Archive.define_task :archive do |t|
+        task = XCJobs::Task::Archive.define_task :archive do |t|
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.configuration = 'Release'
           t.build_dir = 'build'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the project' do
@@ -410,7 +410,7 @@ describe XCJobs::Task do
 
     describe 'archive task with a workspace' do
       let!(:task) do
-        t = XCJobs::Task::Archive.define_task :archive do |t|
+        task = XCJobs::Task::Archive.define_task :archive do |t|
           t.workspace = 'Example.xcworkspace'
           t.scheme = 'Example'
           t.configuration = 'Release'
@@ -421,8 +421,8 @@ describe XCJobs::Task do
           t.build_dir = 'build'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the workspace' do
@@ -486,7 +486,7 @@ describe XCJobs::Task do
   describe XCJobs::Task::Export do
     describe 'export task for IPA' do
       let!(:task) do
-        t = XCJobs::Task::Export.define_task :export do |t|
+        task = XCJobs::Task::Export.define_task :export do |t|
           t.archive_path = 'build/Example'
           t.export_format = 'IPA'
           t.export_path = 'build/Example.ipa'
@@ -494,8 +494,8 @@ describe XCJobs::Task do
           t.export_signing_identity = 'iPhone Distribution: kishikawa katsumi'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the archive path' do
@@ -532,7 +532,7 @@ describe XCJobs::Task do
 
     describe 'export task for PKG' do
       let!(:task) do
-        t = XCJobs::Task::Export.define_task :export do |t|
+        task = XCJobs::Task::Export.define_task :export do |t|
           t.archive_path = 'build/Example'
           t.export_format = 'PKG'
           t.export_path = 'build/Example.pkg'
@@ -540,8 +540,8 @@ describe XCJobs::Task do
           t.export_installer_identity = 'Developer ID Installer'
           t.run
         end
-        t.invoke
-        t
+        task.invoke
+        task
       end
 
       it 'configures the archive path' do
