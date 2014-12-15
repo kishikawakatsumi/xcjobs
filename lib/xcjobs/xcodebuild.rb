@@ -247,6 +247,14 @@ module XCJobs
       define
     end
 
+    def archive_path
+      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+    end
+
+    def export_format
+      @export_format || 'IPA'
+    end
+
     private
 
     def define
@@ -256,14 +264,6 @@ module XCJobs
           run(['xcodebuild', '-exportArchive'] + options)
         end
       end
-    end
-
-    def archive_path
-      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
-    end
-
-    def export_format
-      @export_format || 'IPA'
     end
 
     def options

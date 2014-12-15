@@ -419,4 +419,92 @@ describe XCJobs::Xcodebuild do
       end
     end
   end
+
+  describe XCJobs::Export do
+    describe 'export task for IPA' do
+      let!(:task) do
+        XCJobs::Export.new do |t|
+          t.archive_path = 'build/Example'
+          t.export_format = 'IPA'
+          t.export_path = 'build/Example.ipa'
+          t.export_provisioning_profile = 'Ad_Hoc.mobileprovision'
+          t.export_signing_identity = 'iPhone Distribution: kishikawa katsumi'
+        end
+      end
+
+      it 'configures the archive path' do
+        expect(task.archive_path).to eq 'build/Example'
+      end
+
+      it 'configures the export format' do
+        expect(task.export_format).to eq 'IPA'
+      end
+
+      it 'configures the export path' do
+        expect(task.export_path).to eq 'build/Example.ipa'
+      end
+
+      it 'configures the export provisioning profile' do
+        expect(task.export_provisioning_profile).to eq 'Ad_Hoc.mobileprovision'
+      end
+
+      it 'configures the export signing identity' do
+        expect(task.export_signing_identity).to eq 'iPhone Distribution: kishikawa katsumi'
+      end
+
+      describe 'tasks' do
+        describe 'export' do
+          subject { Rake.application['build:export'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@commands).to eq ['xcodebuild -exportArchive -archivePath build/Example -exportFormat IPA -exportPath build/Example.ipa -exportProvisioningProfile Ad_Hoc.mobileprovision -exportSigningIdentity iPhone Distribution: kishikawa katsumi']
+          end
+        end
+      end
+    end
+
+    describe 'export task for PKG' do
+      let!(:task) do
+        XCJobs::Export.new do |t|
+          t.archive_path = 'build/Example'
+          t.export_format = 'PKG'
+          t.export_path = 'build/Example.pkg'
+          t.export_signing_identity = 'Developer ID Application'
+          t.export_installer_identity = 'Developer ID Installer'
+        end
+      end
+
+      it 'configures the archive path' do
+        expect(task.archive_path).to eq 'build/Example'
+      end
+
+      it 'configures the export format' do
+        expect(task.export_format).to eq 'PKG'
+      end
+
+      it 'configures the export path' do
+        expect(task.export_path).to eq 'build/Example.pkg'
+      end
+
+      it 'configures the export signing identity' do
+        expect(task.export_signing_identity).to eq 'Developer ID Application'
+      end
+
+      it 'configures the export installer identity' do
+        expect(task.export_installer_identity).to eq 'Developer ID Installer'
+      end
+
+      describe 'tasks' do
+        describe 'export' do
+          subject { Rake.application['build:export'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@commands).to eq ['xcodebuild -exportArchive -archivePath build/Example -exportFormat PKG -exportPath build/Example.pkg -exportSigningIdentity Developer ID Application -exportInstallerIdentity Developer ID Installer']
+          end
+        end
+      end
+    end
+  end
 end
