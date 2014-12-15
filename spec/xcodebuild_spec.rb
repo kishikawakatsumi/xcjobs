@@ -163,7 +163,7 @@ describe XCJobs::Xcodebuild do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            expect(@commands).to eq ['xcodebuild test -project Example.xcodeproj -scheme Example -sdk iphoneos -configuration Debug -destination platform=iOS,id=8d18c8c4d1a6988ac4a70d370bfcbe99fef3f7b5']
+            expect(@commands).to eq ['xcodebuild test -project Example.xcodeproj -scheme Example -sdk iphoneos -configuration Debug -destination platform=iOS,id=8d18c8c4d1a6988ac4a70d370bfcbe99fef3f7b5 GCC_SYMBOLS_PRIVATE_EXTERN=NO']
           end
         end
       end
