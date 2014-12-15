@@ -28,6 +28,18 @@ module XCJobs
       @build_settings = {}
     end
 
+    def project
+      if @project
+        File.extname(@project).empty? ? "#{@project}.xcodeproj" : @project
+      end
+    end
+
+    def workspace
+      if @workspace
+        File.extname(@workspace).empty? ? "#{@workspace}.xcworkspace" : @workspace
+      end
+    end
+
     def before_action(&block)
       @before_action = block
     end
