@@ -3,10 +3,9 @@ require 'rake/clean'
 require 'open3'
 
 module XCJobs
-  class Xcodebuild < Rake::TaskLib
+  module XcodebuildBase
     include Rake::DSL if defined?(Rake::DSL)
 
-    attr_accessor :name
     attr_accessor :project
     attr_accessor :target
     attr_accessor :workspace
@@ -18,15 +17,8 @@ module XCJobs
     attr_accessor :build_dir
     attr_accessor :formatter
 
-    attr_reader :destinations
     attr_reader :provisioning_profile_name
     attr_reader :provisioning_profile_uuid
-
-    def initialize(name)
-      @name = name
-      @destinations = []
-      @build_settings = {}
-    end
 
     def project
       if @project
@@ -70,12 +62,20 @@ module XCJobs
       end
     end
 
+    def destinations
+      @destinations ||= []
+    end
+
     def add_destination(destination)
-      @destinations << destination
+      destinations << destination
+    end
+
+    def build_settings
+      @build_settings ||={}
     end
 
     def add_build_setting(setting, value)
-      @build_settings[setting] = value
+      build_settings[setting] = value
     end
 
     private
@@ -132,14 +132,24 @@ module XCJobs
         opts.concat(['-configuration', configuration]) if configuration
         opts.concat(['-derivedDataPath', build_dir]) if build_dir
 
-        @destinations.each do |destination|
+        destinations.each do |destination|
           opts.concat(['-destination', destination])
         end
 
-        @build_settings.each do |setting, value|
+        build_settings.each do |setting, value|
           opts << "#{setting}=#{value}"
         end
       end
+    end
+  end
+
+  class Xcodebuild < Rake::TaskLib
+    include XCJobs::XcodebuildBase
+
+    attr_accessor :name
+
+    def initialize(name)
+      @name = name
     end
   end
 
