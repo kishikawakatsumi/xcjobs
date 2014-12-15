@@ -52,6 +52,36 @@ describe XCJobs::Task do
       end
     end
 
+    context 'When no file extension (project)' do
+      let!(:task) do
+        t = XCJobs::Task::Test.define_task do |t|
+          t.project = 'Project'
+          t.scheme = 'Scheme'
+        end
+        t.invoke
+        t
+      end
+
+      it 'Automatically complemented' do
+        expect(task.project).to eq 'Project.xcodeproj'
+      end
+    end
+
+    context 'When no file extension (workspace)' do
+      let!(:task) do
+        t = XCJobs::Task::Test.define_task do |t|
+          t.workspace = 'Workspace'
+          t.scheme = 'Scheme'
+        end
+        t.invoke
+        t
+      end
+
+      it 'Automatically complemented' do
+        expect(task.workspace).to eq 'Workspace.xcworkspace'
+      end
+    end
+
     describe 'test project with simulator' do
       let!(:task) do
         t = XCJobs::Task::Test.define_task :test do |t|
