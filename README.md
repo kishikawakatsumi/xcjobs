@@ -26,7 +26,7 @@ Or install it yourself as:
 
 ```ruby
 XCJobs::Test.new do |t|
-  t.workspace = "Example.xcworkspace"
+  t.workspace = "Example"
   t.scheme = "Example"
   t.configuration = "Release"
   t.add_destination("name=iPad 2,OS=7.1")
@@ -51,7 +51,7 @@ xcodebuild test -workspace Example.xcworkspace -scheme Example -sdk iphonesimula
 
 ```ruby
 XCJobs::Build.new do |t|
-  t.workspace = "Example.xcworkspace"
+  t.workspace = "Example"
   t.scheme = "Example"
   t.configuration = "Release"
   t.signing_identity = "iPhone Distribution: kishikawa katsumi"
@@ -76,7 +76,7 @@ xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration R
 
 ```ruby
 XCJobs::Archive.new do |t|
-  t.workspace = "Example.xcworkspace"
+  t.workspace = "Example"
   t.scheme = "Example"
   t.configuration = "Release"
   t.signing_identity = "iPhone Distribution: kishikawa katsumi"
@@ -108,7 +108,7 @@ xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration
 ```shell
 $ bundle exec rake build:export
 
-xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive -exportPath build/Example.ipa -exportProvisioningProfile Ad Hoc
+xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive -exportPath build/Example.ipa -exportProvisioningProfile Ad Hoc Provisioning Profile
 ```
 
 ### Distribute (Upload to Testfligh/Crittercism)
