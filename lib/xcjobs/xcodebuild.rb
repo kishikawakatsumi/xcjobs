@@ -1,6 +1,7 @@
 require 'rake/tasklib'
 require 'rake/clean'
 require 'open3'
+require_relative 'helper'
 
 module XCJobs
   class Xcodebuild < Rake::TaskLib
@@ -50,24 +51,7 @@ module XCJobs
 
     def provisioning_profile=(provisioning_profile)
       @provisioning_profile = provisioning_profile
-
-      if File.file?(provisioning_profile)
-        @provisioning_profile_path = provisioning_profile
-      else
-        path = File.join("#{Dir.home}/Library/MobileDevice/Provisioning Profiles/", provisioning_profile)
-        if File.file?(path)
-          @provisioning_profile_path = path
-        end
-      end
-      if @provisioning_profile_path
-        out, status = Open3.capture2 %[/usr/libexec/PlistBuddy -c Print:UUID /dev/stdin <<< $(security cms -D -i "#{@provisioning_profile_path}")]
-        @provisioning_profile_uuid = out.strip if status.success?
-
-        out, status = Open3.capture2 %[/usr/libexec/PlistBuddy -c Print:Name /dev/stdin <<< $(security cms -D -i "#{@provisioning_profile_path}")]
-        @provisioning_profile_name = out.strip if status.success?
-      else
-        @provisioning_profile_name = provisioning_profile
-      end
+      @provisioning_profile_path, @provisioning_profile_uuid, @provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
     end
 
     def add_destination(destination)
@@ -266,6 +250,15 @@ module XCJobs
 
     def export_format
       @export_format || 'IPA'
+    end
+
+    def export_provisioning_profile=(provisioning_profile)
+      provisioning_profile_path, provisioning_profile_uuid, provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
+      if provisioning_profile_name
+        @export_provisioning_profile = provisioning_profile_name
+      else
+        @export_provisioning_profile = provisioning_profile
+      end
     end
 
     private
