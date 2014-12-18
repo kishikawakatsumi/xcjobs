@@ -245,6 +245,36 @@ describe XCJobs::Task do
       end
     end
 
+    context 'When no file extension (project)' do
+      let!(:task) do
+        task = XCJobs::Task::Build.define_task :build do |t|
+          t.project = 'Project'
+          t.scheme = 'Scheme'
+        end
+        task.invoke
+        task
+      end
+
+      it 'Automatically complemented' do
+        expect(task.project).to eq 'Project.xcodeproj'
+      end
+    end
+
+    context 'When no file extension (workspace)' do
+      let!(:task) do
+        task = XCJobs::Task::Build.define_task :build do |t|
+          t.workspace = 'Workspace'
+          t.scheme = 'Scheme'
+        end
+        task.invoke
+        task
+      end
+
+      it 'Automatically complemented' do
+        expect(task.workspace).to eq 'Workspace.xcworkspace'
+      end
+    end
+
     describe 'simple task with a project' do
       let!(:task) do
         task = XCJobs::Task::Build.define_task :build do |t|
