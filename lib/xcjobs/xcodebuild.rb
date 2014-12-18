@@ -4,131 +4,135 @@ require 'open3'
 require_relative 'helper'
 
 module XCJobs
-  module XcodebuildBase
-    include Rake::DSL if defined?(Rake::DSL)
+  module Command
+    module Xcodebuild
+      module Base
+        include Rake::DSL if defined?(Rake::DSL)
 
-    attr_accessor :project
-    attr_accessor :target
-    attr_accessor :workspace
-    attr_accessor :scheme
-    attr_accessor :sdk
-    attr_accessor :configuration
-    attr_accessor :signing_identity
-    attr_accessor :provisioning_profile
-    attr_accessor :build_dir
-    attr_accessor :formatter
+        attr_accessor :project
+        attr_accessor :target
+        attr_accessor :workspace
+        attr_accessor :scheme
+        attr_accessor :sdk
+        attr_accessor :configuration
+        attr_accessor :signing_identity
+        attr_accessor :provisioning_profile
+        attr_accessor :build_dir
+        attr_accessor :formatter
 
-    attr_reader :provisioning_profile_name
-    attr_reader :provisioning_profile_uuid
+        attr_reader :provisioning_profile_name
+        attr_reader :provisioning_profile_uuid
 
-    def project
-      if @project
-        File.extname(@project).empty? ? "#{@project}.xcodeproj" : @project
-      end
-    end
-
-    def workspace
-      if @workspace
-        File.extname(@workspace).empty? ? "#{@workspace}.xcworkspace" : @workspace
-      end
-    end
-
-    def before_action(&block)
-      @before_action = block
-    end
-
-    def after_action(&block)
-      @after_action = block
-    end
-
-    def provisioning_profile=(provisioning_profile)
-      @provisioning_profile = provisioning_profile
-      @provisioning_profile_path, @provisioning_profile_uuid, @provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
-    end
-
-    def destinations
-      @destinations ||= []
-    end
-
-    def add_destination(destination)
-      destinations << destination
-    end
-
-    def build_settings
-      @build_settings ||={}
-    end
-
-    def add_build_setting(setting, value)
-      build_settings[setting] = value
-    end
-
-    private
-
-    def run(cmd)
-      @before_action.call if @before_action
-
-      if @formatter
-        puts (cmd + ['|', @formatter]).join(" ")
-      else
-        puts cmd.join(" ")
-      end
-
-      if @formatter
-        Open3.pipeline_r(cmd, [@formatter]) do |stdout, wait_thrs|
-          output = []
-          while line = stdout.gets
-            puts line
-            output << line
+        def project
+          if @project
+            File.extname(@project).empty? ? "#{@project}.xcodeproj" : @project
           end
+        end
 
-          status = wait_thrs.first.value
-          if status.success?
-            @after_action.call(output, status) if @after_action
+        def workspace
+          if @workspace
+            File.extname(@workspace).empty? ? "#{@workspace}.xcworkspace" : @workspace
+          end
+        end
+
+        def before_action(&block)
+          @before_action = block
+        end
+
+        def after_action(&block)
+          @after_action = block
+        end
+
+        def provisioning_profile=(provisioning_profile)
+          @provisioning_profile = provisioning_profile
+          @provisioning_profile_path, @provisioning_profile_uuid, @provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
+        end
+
+        def destinations
+          @destinations ||= []
+        end
+
+        def add_destination(destination)
+          destinations << destination
+        end
+
+        def build_settings
+          @build_settings ||= {}
+        end
+
+        def add_build_setting(setting, value)
+          build_settings[setting] = value
+        end
+
+        private
+
+        def run(cmd)
+          @before_action.call if @before_action
+
+          if @formatter
+            puts (cmd + ['|', @formatter]).join(" ")
           else
-            fail "xcodebuild failed (exited with status: #{status.exitstatus})"
-          end
-        end
-      else
-        Open3.popen2e(*cmd) do |stdin, stdout_err, wait_thr|
-          output = []
-          while line = stdout_err.gets
-            puts line
-            output << line
+            puts cmd.join(" ")
           end
 
-          status = wait_thr.value
-          if status.success?
-            @after_action.call(output, status) if @after_action
+          if @formatter
+            Open3.pipeline_r(cmd, [@formatter]) do |stdout, wait_thrs|
+              output = []
+              while line = stdout.gets
+                puts line
+                output << line
+              end
+
+              status = wait_thrs.first.value
+              if status.success?
+                @after_action.call(output, status) if @after_action
+              else
+                fail "xcodebuild failed (exited with status: #{status.exitstatus})"
+              end
+            end
           else
-            fail "xcodebuild failed (exited with status: #{status.exitstatus})"
+            Open3.popen2e(*cmd) do |stdin, stdout_err, wait_thr|
+              output = []
+              while line = stdout_err.gets
+                puts line
+                output << line
+              end
+
+              status = wait_thr.value
+              if status.success?
+                @after_action.call(output, status) if @after_action
+              else
+                fail "xcodebuild failed (exited with status: #{status.exitstatus})"
+              end
+            end
           end
         end
-      end
-    end
 
-    def options
-      [].tap do |opts|
-        opts.concat(['-project', project]) if project
-        opts.concat(['-target', target]) if target
-        opts.concat(['-workspace', workspace]) if workspace
-        opts.concat(['-scheme', scheme]) if scheme
-        opts.concat(['-sdk', sdk]) if sdk
-        opts.concat(['-configuration', configuration]) if configuration
-        opts.concat(['-derivedDataPath', build_dir]) if build_dir
+        def options
+          [].tap do |opts|
+            opts.concat(['-project', project]) if project
+            opts.concat(['-target', target]) if target
+            opts.concat(['-workspace', workspace]) if workspace
+            opts.concat(['-scheme', scheme]) if scheme
+            opts.concat(['-sdk', sdk]) if sdk
+            opts.concat(['-configuration', configuration]) if configuration
+            opts.concat(['-derivedDataPath', build_dir]) if build_dir
 
-        destinations.each do |destination|
-          opts.concat(['-destination', destination])
-        end
+            destinations.each do |destination|
+              opts.concat(['-destination', destination])
+            end
 
-        build_settings.each do |setting, value|
-          opts << "#{setting}=#{value}"
+            build_settings.each do |setting, value|
+              opts << "#{setting}=#{value}"
+            end
+          end
         end
       end
     end
   end
 
   class Xcodebuild < Rake::TaskLib
-    include XCJobs::XcodebuildBase
+    include XCJobs::Command::Xcodebuild::Base
 
     attr_accessor :name
 

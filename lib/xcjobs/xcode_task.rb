@@ -4,7 +4,7 @@ require 'open3'
 
 module XCJobs
   class Task < Rake::Task
-    include XCJobs::XcodebuildBase
+    include XCJobs::Command::Xcodebuild::Base
   end
 
   class Task::Test < Task
@@ -120,7 +120,6 @@ module XCJobs
 end
 
 module XCJobs
-
   private
 
   module DSL
