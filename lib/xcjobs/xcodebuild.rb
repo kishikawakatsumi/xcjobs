@@ -128,6 +128,122 @@ module XCJobs
           end
         end
       end
+
+      module Test
+        def sdk
+          @sdk || 'iphonesimulator'
+        end
+
+        def check_conditions
+          raise 'test action requires specifying a scheme' unless scheme
+          raise 'cannot specify both a scheme and targets' if scheme && target
+        end
+
+        def run
+          if sdk == 'iphonesimulator'
+            add_build_setting('CODE_SIGN_IDENTITY', '""')
+            add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
+          end
+
+          add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
+
+          super(['xcodebuild', 'test'] + options)
+        end
+      end
+
+      module Build
+        def check_conditions
+          raise 'the scheme is required when specifying build_dir' if build_dir && !scheme
+          raise 'cannot specify both a scheme and targets' if scheme && target
+
+          CLEAN.include(build_dir) if build_dir
+          CLOBBER.include(build_dir) if build_dir
+        end
+
+        def run
+          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
+          add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
+          add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
+
+          super(['xcodebuild', 'build'] + options)
+        end
+      end
+
+      module Archive
+        attr_accessor :archive_path
+
+        def archive_path
+          @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+        end
+
+        def options
+          super.tap do |opts|
+            opts.concat(['-archivePath', archive_path]) if archive_path
+          end
+        end
+
+        def check_conditions
+          raise 'archive action requires specifying a scheme' unless scheme
+          raise 'cannot specify both a scheme and targets' if scheme && target
+
+          CLEAN.include(build_dir) if build_dir
+          CLOBBER.include(build_dir) if build_dir
+        end
+
+        def run
+          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
+          add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
+          add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
+
+          super(['xcodebuild', 'archive'] + options)
+
+          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" #{File.join("#{scheme}.xcarchive", "dSYMs")})] if build_dir && scheme
+          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip #{scheme}.xcarchive)] if build_dir && scheme
+        end
+      end
+
+      module Export
+        attr_accessor :archive_path
+        attr_accessor :export_format
+        attr_accessor :export_path
+        attr_accessor :export_provisioning_profile
+        attr_accessor :export_signing_identity
+        attr_accessor :export_installer_identity
+        attr_accessor :export_with_original_signing_identity
+
+        def archive_path
+          @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
+        end
+
+        def export_format
+          @export_format || 'IPA'
+        end
+
+        def export_provisioning_profile=(provisioning_profile)
+          provisioning_profile_path, provisioning_profile_uuid, provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
+          if provisioning_profile_name
+            @export_provisioning_profile = provisioning_profile_name
+          else
+            @export_provisioning_profile = provisioning_profile
+          end
+        end
+
+        def options
+          [].tap do |opts|
+            opts.concat(['-archivePath', archive_path]) if archive_path
+            opts.concat(['-exportFormat', export_format])  if export_format
+            opts.concat(['-exportPath', export_path]) if export_path
+            opts.concat(['-exportProvisioningProfile', export_provisioning_profile]) if export_provisioning_profile
+            opts.concat(['-exportSigningIdentity', export_signing_identity]) if export_signing_identity
+            opts.concat(['-exportInstallerIdentity', export_installer_identity]) if export_installer_identity
+            opts.concat(['-exportWithOriginalSigningIdentity']) if export_with_original_signing_identity
+          end
+        end
+
+        def run
+          super(['xcodebuild', '-exportArchive'] + options)
+        end
+      end
     end
   end
 
@@ -135,167 +251,55 @@ module XCJobs
     include XCJobs::Command::Xcodebuild::Base
 
     attr_accessor :name
+    attr_accessor :description
 
-    def initialize(name)
+    def initialize(name, description)
       @name = name
+      @description = description
+      yield self if block_given?
+      define
+    end
+
+    private
+
+    def define
+      check_conditions if self.class.method_defined?(:check_conditions)
+      desc @description
+      task @name do
+        run
+      end
     end
   end
 
   class Test < Xcodebuild
-    def initialize(name = :test)
+    include XCJobs::Command::Xcodebuild::Test
+
+    def initialize(name = :test, description = 'test application')
       super
-      yield self if block_given?
-      define
-    end
-
-    def sdk
-      @sdk || 'iphonesimulator'
-    end
-
-    private
-
-    def define
-      raise 'test action requires specifying a scheme' unless scheme
-      raise 'cannot specify both a scheme and targets' if scheme && target
-
-      desc 'test application'
-      task @name do
-        if sdk == 'iphonesimulator'
-          add_build_setting('CODE_SIGN_IDENTITY', '""')
-          add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
-        end
-
-        add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
-
-        run(['xcodebuild', 'test'] + options)
-      end
     end
   end
 
   class Build < Xcodebuild
-    def initialize(name = :build)
+    include XCJobs::Command::Xcodebuild::Build
+
+    def initialize(name = :build, description = 'build application')
       super
-      yield self if block_given?
-      define
-    end
-
-    private
-
-    def define
-      raise 'the scheme is required when specifying build_dir' if build_dir && !scheme
-      raise 'cannot specify both a scheme and targets' if scheme && target
-
-      CLEAN.include(build_dir) if build_dir
-      CLOBBER.include(build_dir) if build_dir
-
-      desc 'build application'
-      task @name do
-        add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
-        add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
-        add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
-
-        run(['xcodebuild', 'build'] + options)
-      end
     end
   end
 
   class Archive < Xcodebuild
-    attr_accessor :archive_path
+    include XCJobs::Command::Xcodebuild::Archive
 
-    def initialize(name = :archive)
+    def initialize(name = "build:archive", description = 'make xcarchive')
       super
-      yield self if block_given?
-      define
-    end
-
-    private
-
-    def define
-      raise 'archive action requires specifying a scheme' unless scheme
-      raise 'cannot specify both a scheme and targets' if scheme && target
-
-      CLEAN.include(build_dir) if build_dir
-      CLOBBER.include(build_dir) if build_dir
-
-      desc 'make xcarchive'
-      namespace :build do
-        task @name do
-          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
-          add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
-          add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
-
-          run(['xcodebuild', 'archive'] + options)
-
-          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" #{File.join("#{scheme}.xcarchive", "dSYMs")})] if build_dir && scheme
-          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip #{scheme}.xcarchive)] if build_dir && scheme
-        end
-      end
-    end
-
-    def archive_path
-      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
-    end
-
-    def options
-      super.tap do |opts|
-        opts.concat(['-archivePath', archive_path]) if archive_path
-      end
     end
   end
 
   class Export < Xcodebuild
-    attr_accessor :archive_path
-    attr_accessor :export_format
-    attr_accessor :export_path
-    attr_accessor :export_provisioning_profile
-    attr_accessor :export_signing_identity
-    attr_accessor :export_installer_identity
-    attr_accessor :export_with_original_signing_identity
+    include XCJobs::Command::Xcodebuild::Export
 
-    def initialize(name = :export)
+    def initialize(name = "build:export", description = 'export from an archive')
       super
-      yield self if block_given?
-      define
-    end
-
-    def archive_path
-      @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
-    end
-
-    def export_format
-      @export_format || 'IPA'
-    end
-
-    def export_provisioning_profile=(provisioning_profile)
-      provisioning_profile_path, provisioning_profile_uuid, provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
-      if provisioning_profile_name
-        @export_provisioning_profile = provisioning_profile_name
-      else
-        @export_provisioning_profile = provisioning_profile
-      end
-    end
-
-    private
-
-    def define
-      desc 'export from an archive'
-      namespace :build do
-        task name do
-          run(['xcodebuild', '-exportArchive'] + options)
-        end
-      end
-    end
-
-    def options
-      [].tap do |opts|
-        opts.concat(['-archivePath', archive_path]) if archive_path
-        opts.concat(['-exportFormat', export_format])  if export_format
-        opts.concat(['-exportPath', export_path]) if export_path
-        opts.concat(['-exportProvisioningProfile', export_provisioning_profile]) if export_provisioning_profile
-        opts.concat(['-exportSigningIdentity', export_signing_identity]) if export_signing_identity
-        opts.concat(['-exportInstallerIdentity', export_installer_identity]) if export_installer_identity
-        opts.concat(['-exportWithOriginalSigningIdentity']) if export_with_original_signing_identity
-      end
     end
   end
 end

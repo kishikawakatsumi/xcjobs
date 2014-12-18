@@ -26,7 +26,6 @@ describe XCJobs::Task do
       subject do
         task = XCJobs::Task::Test.define_task do |t|
           t.project = 'Example.xcodeproj'
-          t.run
         end
         task.invoke
       end
@@ -42,7 +41,6 @@ describe XCJobs::Task do
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
-          t.run
         end
         task.invoke
       end
@@ -91,7 +89,6 @@ describe XCJobs::Task do
           destinations.each do |destination|
             t.add_destination(destination)
           end
-          t.run
         end
         task.invoke
         task
@@ -130,7 +127,6 @@ describe XCJobs::Task do
           destinations.each do |destination|
             t.add_destination(destination)
           end
-          t.run
         end
         task.invoke
         task
@@ -174,7 +170,6 @@ describe XCJobs::Task do
           t.configuration = 'Debug'
           t.sdk = 'iphoneos'
           t.add_destination(destination)
-          t.run
         end
         task.invoke
         task
@@ -219,7 +214,6 @@ describe XCJobs::Task do
         task = XCJobs::Task::Build.define_task do |t|
           t.project = 'Example.xcodeproj'
           t.build_dir = 'build'
-          t.run
         end
         task.invoke
       end
@@ -235,7 +229,6 @@ describe XCJobs::Task do
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
-          t.run
         end
         task.invoke
       end
@@ -281,7 +274,6 @@ describe XCJobs::Task do
           t.project = 'Example.xcodeproj'
           t.target = 'Example'
           t.configuration = 'Release'
-          t.run
         end
         task.invoke
         task
@@ -324,7 +316,6 @@ describe XCJobs::Task do
             t.provisioning_profile = './spec/profiles/development.mobileprovision'
           end
           t.build_dir = 'build'
-          t.run
         end
         task.invoke
         task
@@ -372,7 +363,6 @@ describe XCJobs::Task do
       subject do
         task = XCJobs::Task::Archive.define_task do |t|
           t.project = 'Example.xcodeproj'
-          t.run
         end
         task.invoke
       end
@@ -388,7 +378,6 @@ describe XCJobs::Task do
           t.project = 'Example.xcodeproj'
           t.scheme = 'Example'
           t.target = 'Example'
-          t.run
         end
         task.invoke
       end
@@ -405,7 +394,6 @@ describe XCJobs::Task do
           t.scheme = 'Example'
           t.configuration = 'Release'
           t.build_dir = 'build'
-          t.run
         end
         task.invoke
         task
@@ -449,7 +437,6 @@ describe XCJobs::Task do
             t.provisioning_profile = 'spec/profiles/distribution.mobileprovision'
           end
           t.build_dir = 'build'
-          t.run
         end
         task.invoke
         task
@@ -526,7 +513,6 @@ describe XCJobs::Task do
             t.export_provisioning_profile = './spec/profiles/adhoc.mobileprovision'
           end
           t.export_signing_identity = 'iPhone Distribution: kishikawa katsumi'
-          t.run
         end
         task.invoke
         task
@@ -572,7 +558,6 @@ describe XCJobs::Task do
           t.export_path = 'build/Example.ipa'
           t.export_provisioning_profile = 'Ad Hoc Provisioning Profile'
           t.export_signing_identity = 'iPhone Distribution: kishikawa katsumi'
-          t.run
         end
         task.invoke
         task
@@ -618,7 +603,6 @@ describe XCJobs::Task do
           t.export_path = 'build/Example.pkg'
           t.export_signing_identity = 'Developer ID Application'
           t.export_installer_identity = 'Developer ID Installer'
-          t.run
         end
         task.invoke
         task
