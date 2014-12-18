@@ -19,8 +19,9 @@ module XCJobs
       if sdk == 'iphonesimulator'
         add_build_setting('CODE_SIGN_IDENTITY', '""')
         add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
-        add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
       end
+
+      add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
       super(['xcodebuild', 'test'] + options)
     end
