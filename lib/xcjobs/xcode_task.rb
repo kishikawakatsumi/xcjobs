@@ -95,6 +95,15 @@ module XCJobs
       @export_format || 'IPA'
     end
 
+    def export_provisioning_profile=(provisioning_profile)
+      provisioning_profile_path, provisioning_profile_uuid, provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
+      if provisioning_profile_name
+        @export_provisioning_profile = provisioning_profile_name
+      else
+        @export_provisioning_profile = provisioning_profile
+      end
+    end
+    
     def options
       [].tap do |opts|
         opts.concat(['-archivePath', archive_path]) if archive_path
