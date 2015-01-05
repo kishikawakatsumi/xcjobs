@@ -85,9 +85,9 @@ XCJobs::Archive.new do |t|
 end
 
 XCJobs::Export.new do |t|
-  t.archivePath = File.join("build", "Example.xcarchive")
-  t.exportPath = File.join("build", "Example.ipa")
-  t.exportProvisioningProfile = "Ad_Hoc.mobileprovision"
+  t.archive_path = File.join("build", "Example.xcarchive")
+  t.export_path = File.join("build", "Example.ipa")
+  t.export_provisioning_profile = "Ad_Hoc.mobileprovision"
   t.formatter = "xcpretty -c"
 end
 ```
@@ -111,7 +111,7 @@ $ bundle exec rake build:export
 xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive -exportPath build/Example.ipa -exportProvisioningProfile Ad Hoc Provisioning Profile
 ```
 
-### Distribute (Upload to Testfligh/Crittercism)
+### Distribute (Upload to TestFlight/Crittercism)
 
 ```ruby
 XCJobs::Distribute::Crittercism.new do |t|
