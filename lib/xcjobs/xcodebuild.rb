@@ -17,6 +17,7 @@ module XCJobs
     attr_accessor :signing_identity
     attr_accessor :provisioning_profile
     attr_accessor :build_dir
+    attr_accessor :coverage
     attr_accessor :formatter
 
     attr_reader :destinations
@@ -39,6 +40,21 @@ module XCJobs
       if @workspace
         File.extname(@workspace).empty? ? "#{@workspace}.xcworkspace" : @workspace
       end
+    end
+
+    def coverage=(coverage)
+      @coverage = coverage
+      if coverage
+        add_build_setting('GCC_INSTRUMENT_PROGRAM_FLOW_ARCS', 'YES')
+        add_build_setting('GCC_GENERATE_TEST_COVERAGE_FILES', 'YES')
+      else
+        @build_settings.delete('GCC_INSTRUMENT_PROGRAM_FLOW_ARCS')
+        @build_settings.delete('GCC_GENERATE_TEST_COVERAGE_FILES')
+      end
+    end
+
+    def coverage_enabled
+      @coverage
     end
 
     def before_action(&block)
@@ -67,6 +83,11 @@ module XCJobs
     def run(cmd)
       @before_action.call if @before_action
 
+      if coverage_enabled
+        out, status = Open3.capture2(*(cmd + ['-showBuildSettings']))
+        configuration_temp_dir = out.lines.grep(/\bCONFIGURATION_TEMP_DIR\b/).first.split('=').last.strip
+      end
+
       if @formatter
         puts (cmd + ['|', @formatter]).join(" ")
       else
@@ -83,6 +104,10 @@ module XCJobs
 
           status = wait_thrs.first.value
           if status.success?
+            if coverage_enabled
+              XCJobs::Coverage.run_gcov(configuration_temp_dir)
+            end
+
             @after_action.call(output, status) if @after_action
           else
             fail "xcodebuild failed (exited with status: #{status.exitstatus})"
@@ -98,6 +123,10 @@ module XCJobs
 
           status = wait_thr.value
           if status.success?
+            if coverage_enabled
+              XCJobs::Coverage.run_gcov(configuration_temp_dir)
+            end
+
             @after_action.call(output, status) if @after_action
           else
             fail "xcodebuild failed (exited with status: #{status.exitstatus})"

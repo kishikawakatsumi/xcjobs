@@ -1,4 +1,5 @@
 require 'rake/tasklib'
+require 'open3'
 
 module XCJobs
   module Distribute
