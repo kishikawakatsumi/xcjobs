@@ -73,6 +73,49 @@ module XCJobs
       end
     end
 
+    class DeployGate < Rake::TaskLib
+      include Rake::DSL if defined?(Rake::DSL)
+      include Distribute
+
+      attr_accessor :owner_name
+
+      attr_accessor :token
+      attr_accessor :file
+      attr_accessor :message
+      attr_accessor :distribution_key
+      attr_accessor :release_note
+      attr_accessor :disable_notify
+      attr_accessor :visibility
+
+      def initialize()
+        yield self if block_given?
+        define
+      end
+
+      private
+
+      def define
+        namespace :distribute do
+          desc 'upload IPA to DeployGate'
+          task :deploygate do
+            upload("https://deploygate.com/api/users/#{owner_name}/apps", form_data)
+          end
+        end
+      end
+
+      def form_data
+        {}.tap do |fields|
+          fields[:token] = token if token
+            fields[:file] = "@#{file}" if file
+          fields[:message] = message if message
+          fields[:distribution_key] = distribution_key if distribution_key
+          fields[:release_note] = release_note if release_note
+          fields[:disable_notify] = 'yes' if disable_notify
+          fields[:visibility] = visibility if visibility
+        end
+      end
+    end
+
     class Crittercism < Rake::TaskLib
       include Rake::DSL if defined?(Rake::DSL)
       include Distribute
