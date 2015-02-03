@@ -26,12 +26,12 @@ Or install it yourself as:
 
 ```ruby
 XCJobs::Test.new do |t|
-  t.workspace = "Example"
-  t.scheme = "Example"
-  t.configuration = "Release"
-  t.add_destination("name=iPad 2,OS=7.1")
-  t.add_destination("name=iPad Air,OS=8.1")
-  t.formatter = "xcpretty -c"
+  t.workspace = 'Example'
+  t.scheme = 'Example'
+  t.configuration = 'Release'
+  t.add_destination('name=iPad 2,OS=7.1')
+  t.add_destination('name=iPad Air,OS=8.1')
+  t.formatter = 'xcpretty -c'
 end
 ```
 
@@ -51,12 +51,12 @@ xcodebuild test -workspace Example.xcworkspace -scheme Example -sdk iphonesimula
 
 ```ruby
 XCJobs::Build.new do |t|
-  t.workspace = "Example"
-  t.scheme = "Example"
-  t.configuration = "Release"
-  t.signing_identity = "iPhone Distribution: kishikawa katsumi"
-  t.build_dir = "build"
-  t.formatter = "xcpretty -c"
+  t.workspace = 'Example'
+  t.scheme = 'Example'
+  t.configuration = 'Release'
+  t.signing_identity = 'iPhone Distribution: Katsumi Kishikawa'
+  t.build_dir = 'build'
+  t.formatter = 'xcpretty -c'
 end
 ```
 
@@ -76,19 +76,19 @@ xcodebuild build -workspace Example.xcworkspace -scheme Example -configuration R
 
 ```ruby
 XCJobs::Archive.new do |t|
-  t.workspace = "Example"
-  t.scheme = "Example"
-  t.configuration = "Release"
-  t.signing_identity = "iPhone Distribution: kishikawa katsumi"
-  t.build_dir = "build"
-  t.formatter = "xcpretty -c"
+  t.workspace = 'Example'
+  t.scheme = 'Example'
+  t.configuration = 'Release'
+  t.signing_identity = 'iPhone Distribution: Katsumi Kishikawa'
+  t.build_dir = 'build'
+  t.formatter = 'xcpretty -c'
 end
 
 XCJobs::Export.new do |t|
-  t.archive_path = File.join("build", "Example.xcarchive")
-  t.export_path = File.join("build", "Example.ipa")
-  t.export_provisioning_profile = "Ad_Hoc.mobileprovision"
-  t.formatter = "xcpretty -c"
+  t.archive_path = File.join('build', 'Example.xcarchive')
+  t.export_path = File.join('build', 'Example.ipa')
+  t.export_provisioning_profile = 'Ad_Hoc.mobileprovision'
+  t.formatter = 'xcpretty -c'
 end
 ```
 
@@ -115,18 +115,18 @@ xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive
 
 ```ruby
 XCJobs::Distribute::Crittercism.new do |t|
-  t.app_id = "xxx..."
-  t.key = "xxx..."
-  t.dsym = File.join("build", "dSYMs.zip")
+  t.app_id = 'xxx...'
+  t.key = 'xxx...'
+  t.dsym = File.join('build', 'dSYMs.zip')
 end
 
 XCJobs::Distribute::TestFlight.new do |t|
-  t.file = File.join("build", "#{Example}.ipa")
-  t.api_token = "xxx..."
-  t.team_token = "xxx..."
+  t.file = File.join('build', "#{Example}.ipa")
+  t.api_token = 'xxx...'
+  t.team_token = 'xxx...'
   t.notify = true
   t.replace = true
-  t.distribution_lists = "Dev"
+  t.distribution_lists = 'Dev'
   t.notes = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}"
 end
 ```
@@ -150,8 +150,8 @@ XCJobs::Certificate.new do |t|
   t.add_certificate('./certificates/adhoc.cer')
   t.add_certificate('./certificates/adhoc.p12', passphrase)
 
-  t.add_profile("AppStore")
-  t.add_profile("Ad Hoc")
+  t.add_profile('AppStore')
+  t.add_profile('Ad Hoc')
 end
 ```
 
@@ -168,7 +168,7 @@ rake certificates:remove        # remove certificates
 
 ```ruby
 XCJobs::InfoPlist::Version.new do |t|
-  t.path = File.join("Example", "Info.plist")
+  t.path = File.join('Example', 'Info.plist')
 end
 ```
 
@@ -182,6 +182,27 @@ rake version:bump:patch         # Bump patch version (0.0.X)
 rake version:current            # Print the current version
 rake version:set_build_number   # Sets build version to number of commits
 rake version:set_build_version  # Sets build version to last git commit hash
+```
+
+### Measuring code coverage
+```
+XCJobs::Test.new('test:ios') do |t|
+  t.workspace = 'Example'
+  t.scheme = 'Example'
+  t.configuration = 'Release'
+  t.add_destination('name=iPhone 5s,OS=8.1')
+  t.coverage = true # enable code coverage
+  t.formatter = 'xcpretty -c'
+end
+```
+
+### Send coverage report to Coveralls
+
+```
+XCJobs::Coverage::Coveralls.new() do |t|
+  t.add_extension('.m')
+  t.add_exclude('Example')
+end
 ```
 
 ## Automate with Travis CI
