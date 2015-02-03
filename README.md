@@ -1,7 +1,6 @@
 # XCJobs
 [![Gem Version](https://badge.fury.io/rb/xcjobs.svg)](http://badge.fury.io/rb/xcjobs) [![Build Status](https://travis-ci.org/kishikawakatsumi/xcjobs.svg?branch=master)](https://travis-ci.org/kishikawakatsumi/xcjobs) [![Coverage Status](https://img.shields.io/coveralls/kishikawakatsumi/xcjobs.svg)](https://coveralls.io/r/kishikawakatsumi/xcjobs?branch=master) [![Code Climate](https://codeclimate.com/github/kishikawakatsumi/xcjobs/badges/gpa.svg)](https://codeclimate.com/github/kishikawakatsumi/xcjobs) [![Dependency Status](https://gemnasium.com/kishikawakatsumi/xcjobs.svg)](https://gemnasium.com/kishikawakatsumi/xcjobs)
 
-
 Support the automation of release process of iOS/OSX apps with CI
 
 ## Installation
@@ -185,7 +184,8 @@ rake version:set_build_version  # Sets build version to last git commit hash
 ```
 
 ### Measuring code coverage
-```
+
+```ruby
 XCJobs::Test.new('test:ios') do |t|
   t.workspace = 'Example'
   t.scheme = 'Example'
@@ -198,7 +198,7 @@ end
 
 ### Send coverage report to Coveralls
 
-```
+```ruby
 XCJobs::Coverage::Coveralls.new() do |t|
   t.add_extension('.m')
   t.add_exclude('Example')
