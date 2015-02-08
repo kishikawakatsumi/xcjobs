@@ -38,7 +38,11 @@ module XCJobs
           sh %[security create-keychain -p "" "#{keychain_name}"]
 
           @certificates.each do |certificate, passphrase|
-            sh %[security import "#{certificate}" -k "#{keychain_name}" -P "#{passphrase}" -T /usr/bin/codesign]
+            puts %[security import "#{certificate}" -k #{keychain_name} -P "********" -T /usr/bin/codesign]
+            out, status = Open3.capture2(*(['security', 'import', "#{certificate}", '-k', "#{keychain_name}", '-P', "#{passphrase}", '-T', '/usr/bin/codesign']))
+            if !status.success?
+              fail'failed to import keychain'
+            end
           end
 
           sh %[security default-keychain -s "#{keychain_name}"]
