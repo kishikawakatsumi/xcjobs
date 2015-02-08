@@ -128,6 +128,17 @@ XCJobs::Distribute::TestFlight.new do |t|
   t.distribution_lists = 'Dev'
   t.notes = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}"
 end
+
+XCJobs::Distribute::DeployGate.new do |t|
+  t.owner_name = 'kishikawakatsumi'
+    t.file = File.join('build', "#{Example}.ipa")
+  t.token = 'xxx...'
+  t.message = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" # optional
+  t.distribution_key = 'xxx...' # optional
+  t.release_note = '...' # optional
+  t.disable_notify = false # optional
+  t.visibility = 'public' # optional
+end
 ```
 
 ```shell
@@ -135,6 +146,7 @@ $ rake -T
 
 rake distribute:crittercism     # upload dSYMs to Crittercism
 rake distribute:testflight      # upload IPA to TestFlight
+rake distribute:deploygate      # upload IPA to DeployGate
 ```
 
 ### Install/Remove certificates (For Travis CI)
