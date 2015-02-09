@@ -1,6 +1,7 @@
 require "xcjobs/version"
 require "xcjobs/xcodebuild"
+require "xcjobs/xcode_task"
 require "xcjobs/certificate"
 require "xcjobs/distribute"
 require "xcjobs/info_plist"
-require "xcjobs/xcode_task"
+require "xcjobs/coverage"

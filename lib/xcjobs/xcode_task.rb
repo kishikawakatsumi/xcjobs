@@ -2,7 +2,7 @@ require 'rake/task'
 
 module XCJobs
   class Task < Rake::Task
-    include XCJobs::Command::Xcodebuild::Base
+    include XCJobs::XcodebuildBase
 
     class << self
       def define_task(*args, &block)
@@ -17,19 +17,19 @@ module XCJobs
   end
 
   class Task::Test < Task
-    include XCJobs::Command::Xcodebuild::Test
+    include XCJobs::XcodebuildTest
   end
 
   class Task::Build < Task
-    include XCJobs::Command::Xcodebuild::Build
+    include XCJobs::XcodebuildBuild
   end
 
   class Task::Archive < Task
-    include XCJobs::Command::Xcodebuild::Archive
+    include XCJobs::XcodebuildArchive
   end
 
   class Task::Export < Task
-    include XCJobs::Command::Xcodebuild::Export
+    include XCJobs::XcodebuildExport
   end
 
 end
