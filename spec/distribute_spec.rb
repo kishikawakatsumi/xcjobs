@@ -9,9 +9,10 @@ describe XCJobs::Distribute do
       @commands << command
     end
 
-    allow_any_instance_of(XCJobs::Distribute).to receive(:upload) do |object, url, form_data|
+    allow_any_instance_of(XCJobs::Distribute).to receive(:upload) do |object, url, form_data, header|
       @url = url
       @form_data = form_data
+      @header = header
     end
 
     Rake.application = rake
@@ -265,6 +266,81 @@ describe XCJobs::Distribute do
           it 'executes the appropriate commands' do
             subject.invoke
             expect(@commands).to eq [%["#{altool}" --upload-app --file "#{file}" --username #{credentials[:username]} --password #{credentials[:password]}]]
+          end
+        end
+      end
+    end
+  end
+
+  describe XCJobs::Distribute::HockeyApp do
+    describe 'define upload dSYMs task' do
+      let(:credentials) do
+        { token: '123456789abcdefg12345678',
+          identifier: 'abcdefghijklmnopqrstuvwxyz123456',
+        }
+      end
+
+      let(:file) do
+        File.join('build', 'Example.ipa')
+      end
+
+      let(:dsym_file) do
+        File.join('build', 'dSYMs.zip')
+      end
+
+      let(:notes) { "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" }
+
+      let!(:task) do
+        XCJobs::Distribute::HockeyApp.new do |t|
+          t.file = file
+          t.dsym = dsym_file
+          t.token = credentials[:token]
+          t.identifier = credentials[:identifier]
+          t.notes = notes
+          t.notes_type = 1
+        end
+      end
+
+      it 'configures the file path' do
+        expect(task.file).to eq file
+      end
+
+      it 'configures the dsym file path' do
+        expect(task.dsym).to eq dsym_file
+      end
+
+      it 'configures the token' do
+        expect(task.token).to eq credentials[:token]
+      end
+
+      it 'configures the identifier' do
+        expect(task.identifier).to eq credentials[:identifier]
+      end
+
+      it 'configures the notes' do
+        expect(task.notes).to eq notes
+      end
+
+      it 'configures the notes_type' do
+        expect(task.notes_type).to eq 1
+      end
+
+      describe 'tasks' do
+        describe 'distribute:hockeyapp' do
+          subject { Rake.application['distribute:hockeyapp'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@url).to eq "https://rink.hockeyapp.net/api/2/apps/#{credentials[:identifier]}/app_versions/upload"
+            expect(@form_data).to eq({
+              ipa: "@#{file}",
+              dsym: "@#{dsym_file}",
+              notes: notes,
+              notes_type: 1,
+            })
+            expect(@header).to eq({
+              "X-HockeyAppToken" => credentials[:token]
+            })
           end
         end
       end
