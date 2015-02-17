@@ -110,7 +110,7 @@ $ bundle exec rake build:export
 xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive -exportPath build/Example.ipa -exportProvisioningProfile Ad Hoc Provisioning Profile
 ```
 
-### Distribute (Upload to TestFlight/Crittercism)
+### Distribute (Upload to Crittercism/TestFlight/DeployGate/HockeyApp)
 
 ```ruby
 XCJobs::Distribute::Crittercism.new do |t|
@@ -139,6 +139,15 @@ XCJobs::Distribute::DeployGate.new do |t|
   t.disable_notify = false # optional
   t.visibility = 'public' # optional
 end
+
+XCJobs::Distribute::HockeyApp.new do |t|
+  t.file = File.join('build', "#{Example}.ipa")
+  t.dsym = File.join('build', 'dSYMs.zip') # optional
+  t.token = 'xxx...'
+  t.identifier = 'xxx...'
+  t.notes = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" # optional
+  t.notes_type = 1 # optional
+end
 ```
 
 ```shell
@@ -147,6 +156,7 @@ $ rake -T
 rake distribute:crittercism     # upload dSYMs to Crittercism
 rake distribute:testflight      # upload IPA to TestFlight
 rake distribute:deploygate      # upload IPA to DeployGate
+rake distribute:hockeyapp       # upload IPA & dSYMs to HockeyApp
 ```
 
 ### Install/Remove certificates (For Travis CI)
