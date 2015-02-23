@@ -3,13 +3,14 @@ require 'open3'
 
 module XCJobs
   module Distribute
-    def upload(url, form_data = {})
+    def upload(url, form_data = {}, header = {})
       @before_action.call if @before_action
 
       curl_options = ['curl', '-sSf', "#{url}"]
       form_fields = form_data.flat_map { |k, v| ['-F', "#{k}=#{v}"] }
-      puts (curl_options + form_fields).join(' ')
-      Open3.popen2e(*(curl_options + form_fields)) do |stdin, stdout_err, wait_thr|
+      header_fields = header.flat_map { |k, v| ['-H', "#{k}:#{v}"] }
+      puts (curl_options + form_fields + header_fields).join(' ')
+      Open3.popen2e(*(curl_options + form_fields + header_fields)) do |stdin, stdout_err, wait_thr|
         output = ''
         while line = stdout_err.gets
           puts line
@@ -175,6 +176,49 @@ module XCJobs
           task :itc do
             sh %["#{altool}" --upload-app --file "#{file}" --username #{username} --password #{password}]
           end
+        end
+      end
+    end
+
+    class HockeyApp < Rake::TaskLib
+      include Rake::DSL if defined?(Rake::DSL)
+      include Distribute
+
+      attr_accessor :file
+      attr_accessor :dsym
+      attr_accessor :token
+      attr_accessor :identifier
+      attr_accessor :notes
+      attr_accessor :notes_type
+
+      def initialize()
+        yield self if block_given?
+        define
+      end
+
+      private
+
+      def define
+        namespace :distribute do
+          desc 'upload IPA & dSYMs to HockeyApp'
+          task :hockeyapp do
+            upload("https://rink.hockeyapp.net/api/2/apps/#{identifier}/app_versions/upload", form_data, header)
+          end
+        end
+      end
+
+      def form_data
+        {}.tap do |fields|
+          fields[:ipa] = "@#{file}" if file
+          fields[:dsym] = "@#{dsym}" if dsym
+          fields[:notes] = notes if notes
+          fields[:notes_type] = notes_type if notes_type
+        end
+      end
+
+      def header
+        {}.tap do |fields|
+          fields["X-HockeyAppToken"] = token if token
         end
       end
     end
