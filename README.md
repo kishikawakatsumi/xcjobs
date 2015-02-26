@@ -115,14 +115,14 @@ xcodebuild -exportArchive -exportFormat IPA -archivePath build/Example.xcarchive
 ```ruby
 XCJobs::Distribute::Crittercism.new do |t|
   t.app_id = 'xxx...'
-  t.key = 'xxx...'
+  t.key = 'yyy...'
   t.dsym = File.join('build', 'dSYMs.zip')
 end
 
 XCJobs::Distribute::TestFlight.new do |t|
   t.file = File.join('build', "#{Example}.ipa")
   t.api_token = 'xxx...'
-  t.team_token = 'xxx...'
+  t.team_token = 'yyy...'
   t.notify = true
   t.replace = true
   t.distribution_lists = 'Dev'
@@ -131,13 +131,26 @@ end
 
 XCJobs::Distribute::DeployGate.new do |t|
   t.owner_name = 'kishikawakatsumi'
-    t.file = File.join('build', "#{Example}.ipa")
+  t.file = File.join('build', "#{Example}.ipa")
   t.token = 'xxx...'
   t.message = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" # optional
-  t.distribution_key = 'xxx...' # optional
+  t.distribution_key = 'yyy...' # optional
   t.release_note = '...' # optional
   t.disable_notify = false # optional
   t.visibility = 'public' # optional
+end
+
+XCJobs::Distribute::Crashlytics.new do |t|
+  t.framework_path = '/path/to/Crashlytics.framework'
+  t.file = File.join('build', "#{Example}.ipa")
+  t.api_key = 'xxx...'
+  t.build_secret = 'yyy...'
+  t.notes = "Uploaded: #{DateTime.now.strftime("%Y/%m/%d %H:%M:%S")}" # optional
+  t.notifications = true # optional
+  t.add_email('TestEmail@crashlytics.com')
+  t.add_email('AmazingTester@twitter.com')
+  t.add_group_alias('GroupAlias')
+  t.add_group_alias('GroupAlias2')
 end
 
 XCJobs::Distribute::HockeyApp.new do |t|
