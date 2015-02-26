@@ -108,7 +108,7 @@ module XCJobs
       def form_data
         {}.tap do |fields|
           fields[:token] = token if token
-            fields[:file] = "@#{file}" if file
+          fields[:file] = "@#{file}" if file
           fields[:message] = message if message
           fields[:distribution_key] = distribution_key if distribution_key
           fields[:release_note] = release_note if release_note
@@ -118,63 +118,58 @@ module XCJobs
       end
     end
 
-    class Crittercism < Rake::TaskLib
+    class Crashlytics < Rake::TaskLib
       include Rake::DSL if defined?(Rake::DSL)
       include Distribute
 
-      attr_accessor :app_id
-      attr_accessor :dsym
-      attr_accessor :key
+      attr_accessor :framework_path
+      attr_accessor :file
+      attr_accessor :api_key
+      attr_accessor :build_secret
+      attr_accessor :notes
+      attr_accessor :notifications
 
-      def initialize(name=:export)
+      def initialize()
+        @notifications = true
+        @emails = []
+        @group_aliases = []
         yield self if block_given?
         define
+      end
+
+      def add_email(email)
+        @emails << email
+      end
+
+      def add_group_alias(group_alias)
+        @group_aliases << group_alias
       end
 
       private
 
       def define
         namespace :distribute do
-          desc 'upload dSYMs to Crittercism'
-          task :crittercism do
-            upload("https://api.crittercism.com/api_beta/dsym/#{app_id}", form_data)
+          desc 'upload IPA to Beta by Crashlytics'
+          task :crashlytics do
+            @before_action.call if @before_action
+            sh *(["#{File.join(framework_path, 'submit')}"] + options)
+            @after_action.call('', SystemExit.new) if @after_action
           end
         end
       end
 
-      def form_data
-        {}.tap do |fields|
-          fields[:dsym] = "@#{dsym}" if dsym
-          fields[:key] = key if key
-        end
-      end
-    end
-
-    class ITC < Rake::TaskLib
-      include Rake::DSL if defined?(Rake::DSL)
-      include Distribute
-
-      attr_accessor :file
-      attr_accessor :username
-      attr_accessor :password
-      attr_accessor :altool
-
-      def initialize(name=:export)
-        yield self if block_given?
-        define
-      end
-
-      def altool
-        @altool || '/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Support/altool'
-      end
-
-      private
-
-      def define
-        namespace :distribute do
-          desc 'upload ipa to iTunes Connect'
-          task :itc do
-            sh %["#{altool}" --upload-app --file "#{file}" --username #{username} --password #{password}]
+      def options
+        [].tap do |opts|
+          opts << api_key
+          opts << build_secret
+          opts.concat(['-ipaPath', file]) if file
+          opts.concat(['-notifications', 'NO']) unless notifications
+          opts.concat(['-emails', @emails.join(',')]) unless @emails.empty?
+          opts.concat(['-groupAliases', @group_aliases.join(',')]) unless @group_aliases.empty?
+          if notes
+            temp = Tempfile.new('release_notes.txt')
+            temp.puts(notes)
+            opts.concat(['-notesPath', temp.path])
           end
         end
       end
@@ -222,5 +217,68 @@ module XCJobs
         end
       end
     end
+
+    class Crittercism < Rake::TaskLib
+      include Rake::DSL if defined?(Rake::DSL)
+      include Distribute
+
+      attr_accessor :app_id
+      attr_accessor :dsym
+      attr_accessor :key
+
+      def initialize()
+        yield self if block_given?
+        define
+      end
+
+      private
+
+      def define
+        namespace :distribute do
+          desc 'upload dSYMs to Crittercism'
+          task :crittercism do
+            upload("https://api.crittercism.com/api_beta/dsym/#{app_id}", form_data)
+          end
+        end
+      end
+
+      def form_data
+        {}.tap do |fields|
+          fields[:dsym] = "@#{dsym}" if dsym
+          fields[:key] = key if key
+        end
+      end
+    end
+
+    class ITC < Rake::TaskLib
+      include Rake::DSL if defined?(Rake::DSL)
+      include Distribute
+
+      attr_accessor :file
+      attr_accessor :username
+      attr_accessor :password
+      attr_accessor :altool
+
+      def initialize()
+        yield self if block_given?
+        define
+      end
+
+      def altool
+        @altool || '/Applications/Xcode.app/Contents/Applications/Application Loader.app/Contents/Frameworks/ITunesSoftwareService.framework/Support/altool'
+      end
+
+      private
+
+      def define
+        namespace :distribute do
+          desc 'upload ipa to iTunes Connect'
+          task :itc do
+            sh *["#{altool}", '--upload-app', '--file', "#{file}", '--username', "#{username}", '--password', "#{password}"]
+          end
+        end
+      end
+    end
+
   end
 end
