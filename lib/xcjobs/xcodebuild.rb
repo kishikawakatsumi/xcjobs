@@ -4,10 +4,9 @@ require 'open3'
 require_relative 'helper'
 
 module XCJobs
-  class Xcodebuild < Rake::TaskLib
+  module XcodebuildBase
     include Rake::DSL if defined?(Rake::DSL)
 
-    attr_accessor :name
     attr_accessor :project
     attr_accessor :target
     attr_accessor :workspace
@@ -20,15 +19,8 @@ module XCJobs
     attr_accessor :coverage
     attr_accessor :formatter
 
-    attr_reader :destinations
     attr_reader :provisioning_profile_name
     attr_reader :provisioning_profile_uuid
-
-    def initialize(name)
-      @name = name
-      @destinations = []
-      @build_settings = {}
-    end
 
     def project
       if @project
@@ -70,15 +62,21 @@ module XCJobs
       @provisioning_profile_path, @provisioning_profile_uuid, @provisioning_profile_name = XCJobs::Helper.extract_provisioning_profile(provisioning_profile)
     end
 
+    def destinations
+      @destinations ||= []
+    end
+
     def add_destination(destination)
-      @destinations << destination
+      destinations << destination
+    end
+
+    def build_settings
+      @build_settings ||= {}
     end
 
     def add_build_setting(setting, value)
-      @build_settings[setting] = value
+      build_settings[setting] = value
     end
-
-    private
 
     def run(cmd)
       @before_action.call if @before_action
@@ -135,6 +133,8 @@ module XCJobs
       end
     end
 
+    private
+
     def options
       [].tap do |opts|
         opts.concat(['-project', project]) if project
@@ -145,111 +145,83 @@ module XCJobs
         opts.concat(['-configuration', configuration]) if configuration
         opts.concat(['-derivedDataPath', build_dir]) if build_dir
 
-        @destinations.each do |destination|
+        destinations.each do |destination|
           opts.concat(['-destination', destination])
         end
 
-        @build_settings.each do |setting, value|
+        build_settings.each do |setting, value|
           opts << "#{setting}=#{value}"
         end
       end
     end
   end
 
-  class Test < Xcodebuild
-    def initialize(name = :test)
-      super
-      yield self if block_given?
-      define
-    end
-
+  module XcodebuildTest
     def sdk
       @sdk || 'iphonesimulator'
     end
 
-    private
-
-    def define
+    def check_conditions
       raise 'test action requires specifying a scheme' unless scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
+    end
 
-      desc 'test application'
-      task @name do
-        if sdk == 'iphonesimulator'
-          add_build_setting('CODE_SIGN_IDENTITY', '""')
-          add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
-        end
-
-        add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
-
-        run(['xcodebuild', 'test'] + options)
+    def run
+      if sdk == 'iphonesimulator'
+        add_build_setting('CODE_SIGN_IDENTITY', '""')
+        add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
       end
+
+      add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
+
+      super(['xcodebuild', 'test'] + options)
     end
   end
 
-  class Build < Xcodebuild
-    def initialize(name = :build)
-      super
-      yield self if block_given?
-      define
-    end
-
-    private
-
-    def define
+  module XcodebuildBuild
+    def check_conditions
       raise 'the scheme is required when specifying build_dir' if build_dir && !scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
       CLEAN.include(build_dir) if build_dir
       CLOBBER.include(build_dir) if build_dir
+    end
 
-      desc 'build application'
-      task @name do
-        add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
-        add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
-        add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
+    def run
+      add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
+      add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
+      add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
 
-        run(['xcodebuild', 'build'] + options)
-      end
+      super(['xcodebuild', 'build'] + options)
     end
   end
 
-  class Archive < Xcodebuild
+  module XcodebuildArchive
     attr_accessor :archive_path
 
-    def initialize(name = :archive)
-      super
-      yield self if block_given?
-      define
-    end
-
-    private
-
-    def define
+    def check_conditions
       raise 'archive action requires specifying a scheme' unless scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
       CLEAN.include(build_dir) if build_dir
       CLOBBER.include(build_dir) if build_dir
-
-      desc 'make xcarchive'
-      namespace :build do
-        task @name do
-          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
-          add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
-          add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
-
-          run(['xcodebuild', 'archive'] + options)
-
-          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" #{File.join("#{scheme}.xcarchive", "dSYMs")})] if build_dir && scheme
-          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip #{scheme}.xcarchive)] if build_dir && scheme
-        end
-      end
     end
 
+    def run
+      add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
+      add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
+      add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
+
+      super(['xcodebuild', 'archive'] + options)
+
+      sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" #{File.join("#{scheme}.xcarchive", "dSYMs")})] if build_dir && scheme
+      sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip #{scheme}.xcarchive)] if build_dir && scheme
+    end
     def archive_path
       @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
     end
+
+    private
 
     def options
       super.tap do |opts|
@@ -258,7 +230,7 @@ module XCJobs
     end
   end
 
-  class Export < Xcodebuild
+  module XcodebuildExport
     attr_accessor :archive_path
     attr_accessor :export_format
     attr_accessor :export_path
@@ -266,12 +238,6 @@ module XCJobs
     attr_accessor :export_signing_identity
     attr_accessor :export_installer_identity
     attr_accessor :export_with_original_signing_identity
-
-    def initialize(name = :export)
-      super
-      yield self if block_given?
-      define
-    end
 
     def archive_path
       @archive_path || (build_dir && scheme ? File.join(build_dir, scheme) : nil)
@@ -290,16 +256,11 @@ module XCJobs
       end
     end
 
-    private
-
-    def define
-      desc 'export from an archive'
-      namespace :build do
-        task name do
-          run(['xcodebuild', '-exportArchive'] + options)
-        end
-      end
+    def run
+      super(['xcodebuild', '-exportArchive'] + options)
     end
+
+    private
 
     def options
       [].tap do |opts|
@@ -311,6 +272,62 @@ module XCJobs
         opts.concat(['-exportInstallerIdentity', export_installer_identity]) if export_installer_identity
         opts.concat(['-exportWithOriginalSigningIdentity']) if export_with_original_signing_identity
       end
+    end
+  end
+
+  class Xcodebuild < Rake::TaskLib
+    include XCJobs::XcodebuildBase
+
+    attr_accessor :name
+    attr_accessor :description
+
+    def initialize(name, description)
+      @name = name
+      @description = description
+      yield self if block_given?
+      define
+    end
+
+    private
+
+    def define
+      check_conditions if self.class.method_defined?(:check_conditions)
+      desc @description
+      task @name do
+        run
+      end
+    end
+  end
+
+  class Test < Xcodebuild
+    include XCJobs::XcodebuildTest
+
+    def initialize(name = :test, description = 'test application')
+      super
+    end
+  end
+
+  class Build < Xcodebuild
+    include XCJobs::XcodebuildBuild
+
+    def initialize(name = :build, description = 'build application')
+      super
+    end
+  end
+
+  class Archive < Xcodebuild
+    include XCJobs::XcodebuildArchive
+
+    def initialize(name = "build:archive", description = 'make xcarchive')
+      super
+    end
+  end
+
+  class Export < Xcodebuild
+    include XCJobs::XcodebuildExport
+
+    def initialize(name = "build:export", description = 'export from an archive')
+      super
     end
   end
 end
