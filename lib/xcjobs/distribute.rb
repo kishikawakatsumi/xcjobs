@@ -185,6 +185,15 @@ module XCJobs
       attr_accessor :identifier
       attr_accessor :notes
       attr_accessor :notes_type
+      attr_accessor :notify
+      attr_accessor :status
+      attr_accessor :tags
+      attr_accessor :teams
+      attr_accessor :users
+      attr_accessor :mandatory
+      attr_accessor :commit_sha
+      attr_accessor :build_server_url
+      attr_accessor :repository_url
 
       def initialize()
         yield self if block_given?
@@ -208,6 +217,15 @@ module XCJobs
           fields[:dsym] = "@#{dsym}" if dsym
           fields[:notes] = notes if notes
           fields[:notes_type] = notes_type if notes_type
+          fields[:notify] = notify if notify
+          fields[:status] = status if status
+          fields[:tags] = tags.join(',') if tags
+          fields[:teams] = teams.join(',') if teams
+          fields[:users] = users.join(',') if users
+          fields[:mandatory] = mandatory if mandatory
+          fields[:commit_sha] = commit_sha if commit_sha
+          fields[:build_server_url] = build_server_url if build_server_url
+          fields[:repository_url] = repository_url if repository_url
         end
       end
 
