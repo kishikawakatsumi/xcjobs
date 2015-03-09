@@ -241,8 +241,8 @@ module XCJobs
 
           run(['xcodebuild', 'archive'] + options)
 
-          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" #{File.join("#{scheme}.xcarchive", "dSYMs")})] if build_dir && scheme
-          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip #{scheme}.xcarchive)] if build_dir && scheme
+          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" "#{File.join("#{scheme}.xcarchive", "dSYMs")}")] if build_dir && scheme
+          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip "#{scheme}.xcarchive")] if build_dir && scheme
         end
       end
     end
