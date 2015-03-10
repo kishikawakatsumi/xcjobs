@@ -262,6 +262,15 @@ describe XCJobs::Distribute do
           t.identifier = credentials[:identifier]
           t.notes = notes
           t.notes_type = 1
+          t.notify = 2
+          t.status = 1
+          t.tags = ['tag1', 'tag2', 'tag3']
+          t.teams = ['12', '23', '42']
+          t.users = ['1224', '5678']
+          t.mandatory = 1
+          t.commit_sha = '0eb0a329c523bb110b13523d48f19dd612ad77f6'
+          t.build_server_url = 'http://build-server-url.example.com'
+          t.repository_url = 'https://github.com/kishikawakatsumi/xcjobs'
         end
       end
 
@@ -289,6 +298,42 @@ describe XCJobs::Distribute do
         expect(task.notes_type).to eq 1
       end
 
+      it 'configures the notify' do
+        expect(task.notify).to eq 2
+      end
+
+      it 'configures the status' do
+        expect(task.status).to eq 1
+      end
+
+      it 'configures the tags' do
+        expect(task.tags).to eq ['tag1', 'tag2', 'tag3']
+      end
+
+      it 'configures the teams' do
+        expect(task.teams).to eq ['12', '23', '42']
+      end
+      
+      it 'configures the users' do
+        expect(task.users).to eq ['1224', '5678']
+      end
+      
+      it 'configures the mandatory' do
+        expect(task.mandatory).to eq 1
+      end
+      
+      it 'configures the commit_sha' do
+        expect(task.commit_sha).to eq '0eb0a329c523bb110b13523d48f19dd612ad77f6'
+      end
+      
+      it 'configures the build_server_url' do
+        expect(task.build_server_url).to eq 'http://build-server-url.example.com'
+      end
+      
+      it 'configures the repository_url' do
+        expect(task.repository_url).to eq 'https://github.com/kishikawakatsumi/xcjobs'
+      end
+      
       describe 'tasks' do
         describe 'distribute:hockeyapp' do
           subject { Rake.application['distribute:hockeyapp'] }
@@ -301,6 +346,15 @@ describe XCJobs::Distribute do
               dsym: "@#{dsym_file}",
               notes: notes,
               notes_type: 1,
+              notify: 2,
+              status: 1,
+              tags: 'tag1,tag2,tag3',
+              teams: '12,23,42',
+              users: '1224,5678',
+              mandatory: 1,
+              commit_sha: '0eb0a329c523bb110b13523d48f19dd612ad77f6',
+              build_server_url: 'http://build-server-url.example.com',
+              repository_url: 'https://github.com/kishikawakatsumi/xcjobs',
             })
             expect(@header).to eq({
               "X-HockeyAppToken" => credentials[:token]
