@@ -1,6 +1,7 @@
 require 'rake/tasklib'
 require 'rake/clean'
 require 'open3'
+require 'shellwords'
 require_relative 'helper'
 
 module XCJobs
@@ -229,8 +230,10 @@ module XCJobs
       raise 'archive action requires specifying a scheme' unless scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
-      CLEAN.include(build_dir) if build_dir
-      CLOBBER.include(build_dir) if build_dir
+      if build_dir
+        CLEAN.include(build_dir)
+        CLOBBER.include(build_dir)
+      end
 
       desc 'make xcarchive'
       namespace :build do
@@ -241,8 +244,12 @@ module XCJobs
 
           run(['xcodebuild', 'archive'] + options)
 
-          sh %[(cd "#{build_dir}"; zip -ryq "dSYMs.zip" "#{File.join("#{scheme}.xcarchive", "dSYMs")}")] if build_dir && scheme
-          sh %[(cd "#{build_dir}"; zip -ryq #{scheme}.xcarchive.zip "#{scheme}.xcarchive")] if build_dir && scheme
+          if build_dir && scheme
+            bd = build_dir.shellescape
+            s = scheme.shellescape
+            sh %[(cd "#{bd}"; zip -ryq "dSYMs.zip" \"#{File.join("#{s}.xcarchive", "dSYMs")}\")]
+            sh %[(cd "#{bd}"; zip -ryq "#{s}.xcarchive.zip" "#{s}.xcarchive")]
+          end
         end
       end
     end
