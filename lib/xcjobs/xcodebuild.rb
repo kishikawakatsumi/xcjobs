@@ -247,8 +247,8 @@ module XCJobs
           if build_dir && scheme
             bd = build_dir.shellescape
             s = scheme.shellescape
-            sh %[(cd "#{bd}"; zip -ryq "dSYMs.zip" \"#{File.join("#{s}.xcarchive", "dSYMs")}\")]
-            sh %[(cd "#{bd}"; zip -ryq "#{s}.xcarchive.zip" "#{s}.xcarchive")]
+            sh %[(cd #{bd}; zip -ryq dSYMs.zip #{File.join("#{s}.xcarchive", "dSYMs")})]
+            sh %[(cd #{bd}; zip -ryq #{s}.xcarchive.zip #{s}.xcarchive)]
           end
         end
       end

@@ -396,8 +396,8 @@ describe XCJobs::Xcodebuild do
           it 'executes the appropriate commands' do
             subject.invoke
             expect(@commands).to eq [ 'xcodebuild archive -project Example.xcodeproj -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp -archivePath build/Example',
-              '(cd "build"; zip -ryq "dSYMs.zip" "Example.xcarchive/dSYMs")',
-              '(cd "build"; zip -ryq "Example.xcarchive.zip" "Example.xcarchive")',
+              '(cd build; zip -ryq dSYMs.zip Example.xcarchive/dSYMs)',
+              '(cd build; zip -ryq Example.xcarchive.zip Example.xcarchive)',
             ]
           end
         end
@@ -461,13 +461,13 @@ describe XCJobs::Xcodebuild do
 
             if ENV['CI']
               expect(@commands).to eq [ 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi -archivePath build/Example',
-                '(cd "build"; zip -ryq "dSYMs.zip" "Example.xcarchive/dSYMs")',
-                '(cd "build"; zip -ryq "Example.xcarchive.zip" "Example.xcarchive")',
+                '(cd build; zip -ryq dSYMs.zip Example.xcarchive/dSYMs)',
+                '(cd build; zip -ryq Example.xcarchive.zip Example.xcarchive)',
               ]
             else
               expect(@commands).to eq [ 'xcodebuild archive -workspace Example.xcworkspace -scheme Example -configuration Release -derivedDataPath build CONFIGURATION_TEMP_DIR=build/temp CODE_SIGN_IDENTITY=iPhone Distribution: kishikawa katsumi PROVISIONING_PROFILE=5d09b88d-ff09-43aa-a6fd-3907f98fe467 -archivePath build/Example',
-                '(cd "build"; zip -ryq "dSYMs.zip" "Example.xcarchive/dSYMs")',
-                '(cd "build"; zip -ryq "Example.xcarchive.zip" "Example.xcarchive")',
+                '(cd build; zip -ryq dSYMs.zip Example.xcarchive/dSYMs)',
+                '(cd build; zip -ryq Example.xcarchive.zip Example.xcarchive)',
               ]
             end
           end
