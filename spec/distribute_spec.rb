@@ -200,6 +200,7 @@ describe XCJobs::Distribute do
           t.api_key = credentials[:api_key]
           t.build_secret = credentials[:build_secret]
           t.notifications = true # optional
+          t.notes = notes
         end
       end
 
@@ -229,7 +230,12 @@ describe XCJobs::Distribute do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            expect(@commands).to eq ["#{File.join(framework_path, 'submit')}", credentials[:api_key], credentials[:build_secret], '-ipaPath', "#{file}"]
+            expect(@commands).to match ["#{File.join(framework_path, 'submit')}", credentials[:api_key], credentials[:build_secret], '-ipaPath', "#{file}", '-notesPath', an_instance_of(String)]
+          end
+
+          it 'attach specified release notes' do
+            subject.invoke
+            expect(IO.read(@commands.last).chomp).to eq notes
           end
         end
       end
@@ -313,27 +319,27 @@ describe XCJobs::Distribute do
       it 'configures the teams' do
         expect(task.teams).to eq ['12', '23', '42']
       end
-      
+
       it 'configures the users' do
         expect(task.users).to eq ['1224', '5678']
       end
-      
+
       it 'configures the mandatory' do
         expect(task.mandatory).to eq 1
       end
-      
+
       it 'configures the commit_sha' do
         expect(task.commit_sha).to eq '0eb0a329c523bb110b13523d48f19dd612ad77f6'
       end
-      
+
       it 'configures the build_server_url' do
         expect(task.build_server_url).to eq 'http://build-server-url.example.com'
       end
-      
+
       it 'configures the repository_url' do
         expect(task.repository_url).to eq 'https://github.com/kishikawakatsumi/xcjobs'
       end
-      
+
       describe 'tasks' do
         describe 'distribute:hockeyapp' do
           subject { Rake.application['distribute:hockeyapp'] }
