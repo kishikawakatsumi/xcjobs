@@ -169,6 +169,7 @@ module XCJobs
           if notes
             temp = Tempfile.new('release_notes.txt')
             temp.puts(notes)
+            temp.flush
             opts.concat(['-notesPath', temp.path])
           end
         end
