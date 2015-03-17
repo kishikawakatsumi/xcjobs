@@ -143,6 +143,7 @@ module XCJobs
       def write_report(report)
         temp = Tempfile.new('coveralls')
         temp.puts(report.to_json)
+        temp.flush
         temp.path
       end
 
