@@ -19,10 +19,23 @@ module XCJobs
       attr_accessor :repo_token
       attr_accessor :service_name
       attr_accessor :service_job_id
+      attr_accessor :service_number
+      attr_accessor :service_pull_request
+      attr_accessor :parallel
+      attr_accessor :service_job_number
+      attr_accessor :service_event_type
 
       def initialize()
-        @service_name = 'travis-ci'
-        @service_job_id = ENV['TRAVIS_JOB_ID']
+        if ENV['TRAVIS']
+          @service_name = 'travis-ci'
+          @service_job_id = ENV['TRAVIS_JOB_ID']
+        elsif ENV['CIRCLECI']
+          @service_name = 'circleci'
+          @service_number = ENV['CIRCLE_BUILD_NUM']
+          @service_pull_request = (ENV['CI_PULL_REQUEST'] || "")[/(\d+)$/, 1]
+          @parallel = ENV['CIRCLE_NODE_TOTAL'].to_i > 1
+          @service_job_number = ENV['CIRCLE_NODE_INDEX']
+        end
 
         @extensions = []
         @excludes = []
@@ -66,6 +79,11 @@ module XCJobs
         report['repo_token'] = repo_token if repo_token
         report['service_name'] = service_name if service_name
         report['service_job_id'] = service_job_id if service_job_id
+        report['service_number'] = service_number if service_number
+        report['service_pull_request'] = service_pull_request if service_pull_request
+        report['parallel'] = parallel if parallel
+        report['service_job_number'] = service_job_number if service_job_number
+        report['service_event_type'] = service_event_type if service_event_type
         report['source_files'] = []
 
         Dir.glob("#{base_dir}/**/*.gcov").each do |file|
