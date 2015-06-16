@@ -3,6 +3,7 @@ require 'json'
 require 'pathname'
 require 'tempfile'
 require 'open3'
+require 'digest/md5'
 
 module XCJobs
   module Coverage
@@ -90,7 +91,7 @@ module XCJobs
           File.open(file, "r") do |handle|
             source_file = {}
             name = ''
-            source = ''
+            source_digest = nil
             coverage = []
 
             handle.each_line do |line|
@@ -102,9 +103,11 @@ module XCJobs
                 key, val = /([^:]+):(.*)$/.match(text).to_a[1..2]
                 if key == 'Source'
                   name = Pathname(val).relative_path_from(Pathname(base_dir)).to_s
+                  if File.exist?(val)
+                    source_digest = Digest::MD5.file(val).to_s
+                  end
                 end
               else
-                source << text + '\n'
                 coverage[number.to_i - 1] = case count.strip
                   when "-"
                     nil
@@ -119,15 +122,27 @@ module XCJobs
               end
             end
 
-            if !is_excluded_path(name)
+            if !is_excluded_path(name) && !source_digest.nil?
               source_file['name'] = name
-              source_file['source'] = source
+              source_file['source_digest'] = source_digest
               source_file['coverage'] = coverage
 
               report['source_files'] << source_file
             end
           end
         end
+
+        remotes = %x[git remote -v].rstrip.split(/\r?\n/).map {|line| line.chomp }.select { |line| line.include? 'fetch'}.first.split(' ')
+        report['git'] = {
+          'head' => {
+            'id' => %x[git --no-pager log -1 --pretty=format:%H],
+            'author_name' => %x[git --no-pager log -1 --pretty=format:%aN],
+            'author_email' => %x[git --no-pager log -1 --pretty=format:%ae],
+            'committer_name' => %x[git --no-pager log -1 --pretty=format:%cN],
+            'committer_email' => %x[git --no-pager log -1 --pretty=format:%ce],
+            'message' => %x[git --no-pager log -1 --pretty=format:%s] },
+          'branch' => %x[git rev-parse --abbrev-ref HEAD].strip,
+          'remotes' => {'name' => remotes[0], 'remote' => remotes[1]} }
 
         report
       end
@@ -159,10 +174,12 @@ module XCJobs
       end
 
       def write_report(report)
-        temp = Tempfile.new('coveralls')
-        temp.puts(report.to_json)
-        temp.flush
-        temp.path
+        tempdir = Pathname.new(Dir.tmpdir).join(SecureRandom.hex)
+        FileUtils.mkdir_p(tempdir)
+        tempfile = File::open(tempdir.join('coveralls.json'), "w")
+        tempfile.puts(report.to_json)
+        tempfile.flush
+        tempfile.path
       end
 
       def upload(json_file)
