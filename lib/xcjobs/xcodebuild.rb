@@ -154,11 +154,13 @@ module XCJobs
       desc 'test application'
       task @name do
         if sdk == 'iphonesimulator'
-          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
           add_build_setting('CODE_SIGN_IDENTITY', '""')
           add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
         end
-
+        if sdk == 'macosx'
+          add_build_setting('CONFIGURATION_BUILD_DIR', File.expand_path(build_dir)) if build_dir
+        end
+        add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
         run(['xcodebuild', 'test'] + options)
@@ -166,11 +168,18 @@ module XCJobs
         if coverage_enabled
           out, status = Open3.capture2(*(['xcodebuild', 'test'] + options + ['-showBuildSettings']))
           
+          configuration_build_dir = out.lines.grep(/\bCONFIGURATION_BUILD_DIR\b/).first.split('=').last.strip
           project_temp_root = out.lines.grep(/\bPROJECT_TEMP_ROOT\b/).first.split('=').last.strip
           object_file_dir_normal = out.lines.grep(/\bOBJECT_FILE_DIR_normal\b/).first.split('=').last.strip
           current_arch = out.lines.grep(/\bCURRENT_ARCH\b/).first.split('=').last.strip
           executable_name = out.lines.grep(/\bEXECUTABLE_NAME\b/).first.split('=').last.strip
-          executable_path = File.join(File.join(object_file_dir_normal, current_arch), executable_name)
+          executable_path = out.lines.grep(/\bEXECUTABLE_PATH\b/).first.split('=').last.strip
+          
+          if sdk.start_with 'iphone'
+            target_path = File.join(File.join(object_file_dir_normal, current_arch), executable_name)
+          elsif sdk == 'macosx'
+            target_path = File.join(configuration_build_dir, executable_path)
+          end
           
           code_coverage_dir = File.join(project_temp_root, 'CodeCoverage')
           profdata_dir = File.join(code_coverage_dir, scheme)
@@ -179,12 +188,17 @@ module XCJobs
           gcov_file = {}
           source_path = ''
           
-          out, status = Open3.capture2(*(['xcrun', 'llvm-cov', 'report', '-instr-profile', profdata_path, executable_path, '-use-color=0']))
+          cmd = ['xcrun', 'llvm-cov', 'report']
+          opts = ['-instr-profile', profdata_path, target_path, '-use-color=0']
+          puts (cmd + opts).join(" ")
+          out, status = Open3.capture2(*(cmd + opts))
           out.lines.each do |line|
             puts line
           end
           
-          out, status = Open3.capture2(*(['xcrun', 'llvm-cov', 'show', '-instr-profile', profdata_path, executable_path, '-use-color=0']))
+          cmd = ['xcrun', 'llvm-cov', 'show']
+          puts (cmd + opts).join(" ")
+          out, status = Open3.capture2(*(cmd + opts))
           out.lines.each do |line|
             match = /^(['"]?(?:\/[^\/]+)*['"]?):$/.match(line)
             if match.to_a.count > 0
@@ -208,7 +222,7 @@ module XCJobs
           end
           
           gcov_file.each do |key, value|
-            gcon_path = File.join(File.dirname(executable_path), "#{File.basename(executable_path)}.gcov")
+            gcon_path = File.join(File.dirname(target_path), "#{File.basename(target_path)}.gcov")
             file = File::open(gcon_path, "w")
             file.puts("#{'-'.rjust(5)}:#{'0'.rjust(5)}:Source:#{key}")
             file.puts(value)
