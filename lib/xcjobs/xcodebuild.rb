@@ -175,7 +175,7 @@ module XCJobs
           executable_name = out.lines.grep(/\bEXECUTABLE_NAME\b/).first.split('=').last.strip
           executable_path = out.lines.grep(/\bEXECUTABLE_PATH\b/).first.split('=').last.strip
           
-          if sdk.start_with 'iphone'
+          if sdk.start_with? 'iphone'
             target_path = File.join(File.join(object_file_dir_normal, current_arch), executable_name)
           elsif sdk == 'macosx'
             target_path = File.join(configuration_build_dir, executable_path)
