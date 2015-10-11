@@ -43,17 +43,6 @@ module XCJobs
       end
     end
 
-    def coverage=(coverage)
-      @coverage = coverage
-      if coverage
-        add_build_setting('GCC_INSTRUMENT_PROGRAM_FLOW_ARCS', 'YES')
-        add_build_setting('GCC_GENERATE_TEST_COVERAGE_FILES', 'YES')
-      else
-        @build_settings.delete('GCC_INSTRUMENT_PROGRAM_FLOW_ARCS')
-        @build_settings.delete('GCC_GENERATE_TEST_COVERAGE_FILES')
-      end
-    end
-
     def coverage_enabled
       @coverage
     end
@@ -84,11 +73,6 @@ module XCJobs
     def run(cmd)
       @before_action.call if @before_action
 
-      if coverage_enabled
-        out, status = Open3.capture2(*(cmd + ['-showBuildSettings']))
-        configuration_temp_dir = out.lines.grep(/\bCONFIGURATION_TEMP_DIR\b/).first.split('=').last.strip
-      end
-
       if @formatter
         puts (cmd + ['|', @formatter]).join(" ")
       else
@@ -105,10 +89,6 @@ module XCJobs
 
           status = wait_thrs.first.value
           if status.success?
-            if coverage_enabled
-              XCJobs::Coverage.run_gcov(configuration_temp_dir)
-            end
-
             @after_action.call(output, status) if @after_action
           else
             fail "xcodebuild failed (exited with status: #{status.exitstatus})"
@@ -124,10 +104,6 @@ module XCJobs
 
           status = wait_thr.value
           if status.success?
-            if coverage_enabled
-              XCJobs::Coverage.run_gcov(configuration_temp_dir)
-            end
-
             @after_action.call(output, status) if @after_action
           else
             fail "xcodebuild failed (exited with status: #{status.exitstatus})"
@@ -144,6 +120,7 @@ module XCJobs
         opts.concat(['-scheme', scheme]) if scheme
         opts.concat(['-sdk', sdk]) if sdk
         opts.concat(['-configuration', configuration]) if configuration
+        opts.concat(['-enableCodeCoverage', 'YES']) if coverage_enabled
         opts.concat(['-derivedDataPath', build_dir]) if build_dir
 
         @destinations.each do |destination|
@@ -177,6 +154,7 @@ module XCJobs
       desc 'test application'
       task @name do
         if sdk == 'iphonesimulator'
+          add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
           add_build_setting('CODE_SIGN_IDENTITY', '""')
           add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
         end
@@ -184,6 +162,59 @@ module XCJobs
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
         run(['xcodebuild', 'test'] + options)
+        
+        if coverage_enabled
+          out, status = Open3.capture2(*(['xcodebuild', 'test'] + options + ['-showBuildSettings']))
+          
+          project_temp_root = out.lines.grep(/\bPROJECT_TEMP_ROOT\b/).first.split('=').last.strip
+          object_file_dir_normal = out.lines.grep(/\bOBJECT_FILE_DIR_normal\b/).first.split('=').last.strip
+          current_arch = out.lines.grep(/\bCURRENT_ARCH\b/).first.split('=').last.strip
+          executable_name = out.lines.grep(/\bEXECUTABLE_NAME\b/).first.split('=').last.strip
+          executable_path = File.join(File.join(object_file_dir_normal, current_arch), executable_name)
+          
+          code_coverage_dir = File.join(project_temp_root, 'CodeCoverage')
+          profdata_dir = File.join(code_coverage_dir, scheme)
+          profdata_path = File.join(profdata_dir, 'Coverage.profdata')
+          
+          gcov_file = {}
+          source_path = ''
+          
+          out, status = Open3.capture2(*(['xcrun', 'llvm-cov', 'report', '-instr-profile', profdata_path, executable_path, '-use-color=0']))
+          out.lines.each do |line|
+            puts line
+          end
+          
+          out, status = Open3.capture2(*(['xcrun', 'llvm-cov', 'show', '-instr-profile', profdata_path, executable_path, '-use-color=0']))
+          out.lines.each do |line|
+            match = /^(['"]?(?:\/[^\/]+)*['"]?):$/.match(line)
+            if match.to_a.count > 0
+              source_path = match.to_a[1]
+              gcov_file[source_path] = []
+              next
+            end
+            
+            match = /^[ ]*([0-9]+|[ ]+)\|[ ]*([0-9]+)\|(.*)$/.match(line)
+            next unless match.to_a.count == 4
+            count, number, text = match.to_a[1..3]
+            
+            execution_count = case count.strip
+                when ''
+                  '-'.rjust(5)
+                when '0'
+                  '#####'
+                else count
+                end
+            gcov_file[source_path] << "#{execution_count.rjust(5)}:#{number.rjust(5)}:#{text}"
+          end
+          
+          gcov_file.each do |key, value|
+            gcon_path = File.join(File.dirname(executable_path), "#{File.basename(executable_path)}.gcov")
+            file = File::open(gcon_path, "w")
+            file.puts("#{'-'.rjust(5)}:#{'0'.rjust(5)}:Source:#{key}")
+            file.puts(value)
+            file.flush
+          end
+        end
       end
     end
   end
