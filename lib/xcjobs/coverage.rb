@@ -8,12 +8,6 @@ require 'digest/md5'
 module XCJobs
   module Coverage
 
-    def self.run_gcov(configuration_temp_dir)
-      Dir.glob("#{configuration_temp_dir}/**/*.gcda").each do |file|
-        system %[(cd "#{File.dirname(file)}" && gcov -l "#{file}")]
-      end
-    end
-
     class Coveralls < Rake::TaskLib
       include Rake::DSL if defined?(Rake::DSL)
 
@@ -109,9 +103,9 @@ module XCJobs
                 end
               else
                 coverage[number.to_i - 1] = case count.strip
-                  when "-"
+                  when '-'
                     nil
-                  when "#####"
+                  when '#####'
                     if text.strip == '}'
                       nil
                     else
