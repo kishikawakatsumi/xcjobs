@@ -204,7 +204,7 @@ module XCJobs
       targetSettings = settings.select { |key, _| settings[key]['PRODUCT_TYPE'] != 'com.apple.product-type.bundle.unit-test' }
       targetSettings.each do |target, settings|
         if settings['PRODUCT_TYPE'] == 'com.apple.product-type.framework'
-          if sdk.start_with? 'iphone'
+          if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
             target_dir = settings['OBJECT_FILE_DIR_normal'].gsub('Build/Intermediates', "Build/Intermediates/CodeCoverage/#{target}/Intermediates")
             executable_name = settings['EXECUTABLE_NAME']
             target_path = File.join(File.join(target_dir, settings['CURRENT_ARCH']), executable_name)
