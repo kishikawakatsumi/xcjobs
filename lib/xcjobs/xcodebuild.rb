@@ -2,6 +2,7 @@ require 'rake/tasklib'
 require 'rake/clean'
 require 'open3'
 require 'shellwords'
+require 'securerandom'
 require_relative 'helper'
 
 module XCJobs
@@ -189,7 +190,7 @@ module XCJobs
       end
       
       gcov_file.each do |key, value|
-        gcon_path = File.join(File.dirname(profdata_path), "#{File.basename(target_path)}.gcov")
+        gcon_path = File.join(File.dirname(profdata_path), "#{SecureRandom.urlsafe_base64(6)}-#{File.basename(target_path)}.gcov")
         file = File::open(gcon_path, "w")
         file.puts("#{'-'.rjust(5)}:#{'0'.rjust(5)}:Source:#{key}")
         file.puts(value)
