@@ -27,6 +27,8 @@ module XCJobs
     attr_reader :provisioning_profile_uuid
 
     def initialize(name)
+      $stdout.sync = $stderr.sync = true
+      
       @name = name
       @destinations = []
       @build_settings = {}
