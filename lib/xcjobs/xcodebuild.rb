@@ -82,8 +82,11 @@ module XCJobs
         puts cmd.join(" ")
       end
 
+      env = {}
+      options = { unsetenv_others: true }
+
       if @formatter
-        Open3.pipeline_r(cmd, [@formatter]) do |stdout, wait_thrs|
+        Open3.pipeline_r([env] + cmd + [options], [@formatter]) do |stdout, wait_thrs|
           output = []
           while line = stdout.gets
             puts line
@@ -98,7 +101,7 @@ module XCJobs
           end
         end
       else
-        Open3.popen2e(*cmd) do |stdin, stdout_err, wait_thr|
+        Open3.popen2e(env, *cmd, options) do |stdin, stdout_err, wait_thr|
           output = []
           while line = stdout_err.gets
             puts line
