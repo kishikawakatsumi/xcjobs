@@ -354,6 +354,7 @@ module XCJobs
 
     def initialize(name = :export)
       super
+      @export_format = 'IPA'
       yield self if block_given?
       define
     end
@@ -363,7 +364,7 @@ module XCJobs
     end
 
     def export_format
-      @export_format || 'IPA'
+      @export_format
     end
 
     def export_provisioning_profile=(provisioning_profile)
