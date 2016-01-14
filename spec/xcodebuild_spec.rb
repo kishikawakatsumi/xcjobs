@@ -616,6 +616,32 @@ describe XCJobs::Xcodebuild do
       end
     end
 
+    describe 'export task for IPA' do
+      let!(:task) do
+        XCJobs::Export.new do |t|
+          t.archive_path = 'build/Example'
+          t.export_format = nil
+          t.export_path = 'build'
+          t.options_plist = 'options.plist'
+        end
+      end
+
+      it 'configures the export options plist' do
+        expect(task.options_plist).to eq 'options.plist'
+      end
+
+      describe 'tasks' do
+        describe 'export' do
+          subject { Rake.application['build:export'] }
+
+          it 'executes the appropriate commands' do
+            subject.invoke
+            expect(@commands).to eq ['xcodebuild -exportArchive -exportOptionsPlist options.plist -archivePath build/Example -exportPath build']
+          end
+        end
+      end
+    end
+
     describe 'export task for PKG' do
       let!(:task) do
         XCJobs::Export.new do |t|
