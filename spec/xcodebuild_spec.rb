@@ -334,6 +334,29 @@ describe XCJobs::Xcodebuild do
         end
       end
     end
+
+    describe 'unsetenv_others' do
+      it 'defaults to false' do
+        task = XCJobs::Build.new do |t|
+          t.project = 'Example.xcodeproj'
+          t.target = 'Example'
+          t.configuration = 'Release'
+        end
+
+        expect(task.unsetenv_others).to eq false
+      end
+
+      it 'can be configured' do
+        task = XCJobs::Build.new do |t|
+          t.project = 'Example.xcodeproj'
+          t.target = 'Example'
+          t.configuration = 'Release'
+          t.unsetenv_others = true
+        end
+
+        expect(task.unsetenv_others).to eq true
+      end
+    end
   end
 
   describe XCJobs::Archive do
@@ -510,6 +533,10 @@ describe XCJobs::Xcodebuild do
 
       it 'configures the export signing identity' do
         expect(task.export_signing_identity).to eq 'iPhone Distribution: kishikawa katsumi'
+      end
+
+      it 'configures unsetenv_others to true by default' do
+        expect(task.unsetenv_others).to be_truthy
       end
 
       describe 'tasks' do
