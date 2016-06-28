@@ -213,7 +213,7 @@ module XCJobs
       targetSettings.each do |target, settings|
         if settings['PRODUCT_TYPE'] == 'com.apple.product-type.framework'
           if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
-            target_dir = settings['OBJECT_FILE_DIR_normal'].gsub('Build/Intermediates', "Build/Intermediates/CodeCoverage/#{target}/Intermediates")
+            target_dir = settings['OBJECT_FILE_DIR_normal'].gsub('Build/Intermediates', "Build/Intermediates/CodeCoverage/Intermediates")
             executable_name = settings['EXECUTABLE_NAME']
             target_path = File.join(File.join(target_dir, settings['CURRENT_ARCH']), executable_name)
           else
@@ -225,7 +225,7 @@ module XCJobs
           
         end
         
-        code_coverage_dir = settings['BUILD_DIR'].gsub('Build/Products', "Build/Intermediates/CodeCoverage/#{target}/")
+        code_coverage_dir = settings['BUILD_DIR'].gsub('Build/Products', "/Build/Intermediates/CodeCoverage/")
         profdata_path = File.join(code_coverage_dir, 'Coverage.profdata')
         
         show_coverage(profdata_path, target_path)
