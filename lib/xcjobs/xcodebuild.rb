@@ -26,12 +26,15 @@ module XCJobs
     attr_reader :provisioning_profile_name
     attr_reader :provisioning_profile_uuid
 
+    attr_accessor :unsetenv_others
+
     def initialize(name)
       $stdout.sync = $stderr.sync = true
       
       @name = name
       @destinations = []
       @build_settings = {}
+      @unsetenv_others = false
     end
 
     def project
@@ -82,8 +85,11 @@ module XCJobs
         puts cmd.join(" ")
       end
 
+      env = {}
+      options = { unsetenv_others: unsetenv_others }
+
       if @formatter
-        Open3.pipeline_r(cmd, [@formatter]) do |stdout, wait_thrs|
+        Open3.pipeline_r([env] + cmd + [options], [@formatter]) do |stdout, wait_thrs|
           output = []
           while line = stdout.gets
             puts line
@@ -98,7 +104,7 @@ module XCJobs
           end
         end
       else
-        Open3.popen2e(*cmd) do |stdin, stdout_err, wait_thr|
+        Open3.popen2e(env, *cmd, options) do |stdin, stdout_err, wait_thr|
           output = []
           while line = stdout_err.gets
             puts line
@@ -354,6 +360,7 @@ module XCJobs
 
     def initialize(name = :export)
       super
+      self.unsetenv_others = true
       yield self if block_given?
       define
     end
