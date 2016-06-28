@@ -357,10 +357,12 @@ module XCJobs
     attr_accessor :export_signing_identity
     attr_accessor :export_installer_identity
     attr_accessor :export_with_original_signing_identity
+    attr_accessor :options_plist
 
     def initialize(name = :export)
       super
       self.unsetenv_others = true
+      @export_format = 'IPA'
       yield self if block_given?
       define
     end
@@ -370,7 +372,7 @@ module XCJobs
     end
 
     def export_format
-      @export_format || 'IPA'
+      @export_format
     end
 
     def export_provisioning_profile=(provisioning_profile)
@@ -395,6 +397,7 @@ module XCJobs
 
     def options
       [].tap do |opts|
+        opts.concat(['-exportOptionsPlist', options_plist]) if options_plist
         opts.concat(['-archivePath', archive_path]) if archive_path
         opts.concat(['-exportFormat', export_format])  if export_format
         opts.concat(['-exportPath', export_path]) if export_path
