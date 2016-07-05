@@ -85,7 +85,7 @@ module XCJobs
         puts cmd.join(" ")
       end
 
-      env = {}
+      env = { "NSUnbufferedIO" => "YES" }
       options = { unsetenv_others: unsetenv_others }
 
       if @formatter
