@@ -217,7 +217,7 @@ module XCJobs
             executable_name = settings['EXECUTABLE_NAME']
             target_path = File.join(File.join(target_dir, settings['CURRENT_ARCH']), executable_name)
           else
-            target_dir = settings['CODESIGNING_FOLDER_PATH'].gsub('Build/Products', "Build/Intermediates/CodeCoverage/#{target}/Products")
+            target_dir = settings['CODESIGNING_FOLDER_PATH'].gsub('Build/Products', "Build/Intermediates/CodeCoverage/Products")
             executable_name = settings['EXECUTABLE_NAME']
             target_path = File.join(target_dir, executable_name)
           end
@@ -225,7 +225,7 @@ module XCJobs
           
         end
         
-        code_coverage_dir = settings['BUILD_DIR'].gsub('Build/Products', "/Build/Intermediates/CodeCoverage/")
+        code_coverage_dir = settings['BUILD_DIR'].gsub('Build/Products', "Build/Intermediates/CodeCoverage")
         profdata_path = File.join(code_coverage_dir, 'Coverage.profdata')
         
         show_coverage(profdata_path, target_path)
