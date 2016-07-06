@@ -10,7 +10,7 @@ module XCJobs
       form_fields = form_data.flat_map { |k, v| ['-F', "#{k}=#{v}"] }
       header_fields = header.flat_map { |k, v| ['-H', "#{k}:#{v}"] }
       puts (curl_options + form_fields + header_fields).join(' ')
-      Open3.popen2e(*(curl_options + form_fields + header_fields)) do |stdin, stdout_err, wait_thr|
+      Open3.popen2e({ "NSUnbufferedIO" => "YES" }, *(curl_options + form_fields + header_fields)) do |stdin, stdout_err, wait_thr|
         output = ''
         while line = stdout_err.gets
           puts line
