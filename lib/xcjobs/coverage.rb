@@ -179,7 +179,7 @@ module XCJobs
       def upload(json_file)
         curl_options = ['curl', '-sSf', '-F', "json_file=@#{json_file}", 'https://coveralls.io/api/v1/jobs']
         puts curl_options.join(' ')
-        Open3.popen2e(*curl_options) do |stdin, stdout_err, wait_thr|
+        Open3.popen2e({ "NSUnbufferedIO" => "YES" }, *curl_options) do |stdin, stdout_err, wait_thr|
           output = ''
           while line = stdout_err.gets
             puts line
