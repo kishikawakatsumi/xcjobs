@@ -211,18 +211,19 @@ module XCJobs
       
       targetSettings = settings.select { |key, _| settings[key]['PRODUCT_TYPE'] != 'com.apple.product-type.bundle.unit-test' }
       targetSettings.each do |target, settings|
-        if settings['PRODUCT_TYPE'] == 'com.apple.product-type.framework'
+        product_type = settings['PRODUCT_TYPE']
+        if product_type == 'com.apple.product-type.framework' || product_type == 'com.apple.product-type.application'
           if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
             target_dir = settings['OBJECT_FILE_DIR_normal'].gsub('Build/Intermediates', "Build/Intermediates/CodeCoverage/Intermediates")
             executable_name = settings['EXECUTABLE_NAME']
             target_path = File.join(File.join(target_dir, settings['CURRENT_ARCH']), executable_name)
           else
-            target_dir = settings['CODESIGNING_FOLDER_PATH'].gsub('Build/Products', "Build/Intermediates/CodeCoverage/Products")
-            executable_name = settings['EXECUTABLE_NAME']
+            target_dir = (product_type == 'com.apple.product-type.application' ? settings['CONFIGURATION_BUILD_DIR'] : settings['CODESIGNING_FOLDER_PATH']).gsub('Build/Products', "Build/Intermediates/CodeCoverage/Products")
+            executable_name = product_type == 'com.apple.product-type.application' ? settings['EXECUTABLE_PATH'] : settings['EXECUTABLE_NAME']
             target_path = File.join(target_dir, executable_name)
           end
-        else
-          
+        elsif
+          raise %[Product type (PRODUCT_TYPE) '#{product_type}' is unsupported.]
         end
         
         code_coverage_dir = settings['BUILD_DIR'].gsub('Build/Products', "Build/Intermediates/CodeCoverage")
