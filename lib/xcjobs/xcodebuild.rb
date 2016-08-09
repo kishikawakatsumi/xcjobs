@@ -170,9 +170,12 @@ module XCJobs
   end
 
   class Test < Xcodebuild
+    attr_accessor :without_building
+
     def initialize(name = :test)
       super
       @description = 'test application'
+      @without_building = false
       yield self if block_given?
       define
     end
@@ -286,8 +289,8 @@ module XCJobs
       task @name do        
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
-        run(['xcodebuild', 'test'] + options)
-        
+        run(['xcodebuild', without_building ? 'test-without-building' : 'test'] + options)
+
         if coverage_enabled
           coverage_report(options)
         end
@@ -296,9 +299,12 @@ module XCJobs
   end
 
   class Build < Xcodebuild
+    attr_accessor :for_testing
+
     def initialize(name = :build)
       super
       @description = 'build application'
+      @for_testing = false
       yield self if block_given?
       define
     end
@@ -318,7 +324,7 @@ module XCJobs
         add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
         add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
 
-        run(['xcodebuild', 'build'] + options)
+        run(['xcodebuild', for_testing ? 'build-for-testing' : 'build'] + options)
       end
     end
   end
