@@ -10,6 +10,7 @@ module XCJobs
     include Rake::DSL if defined?(Rake::DSL)
 
     attr_accessor :name
+    attr_accessor :description
     attr_accessor :project
     attr_accessor :target
     attr_accessor :workspace
@@ -146,6 +147,7 @@ module XCJobs
   class Test < Xcodebuild
     def initialize(name = :test)
       super
+      @description = 'test application'
       yield self if block_given?
       define
     end
@@ -255,7 +257,7 @@ module XCJobs
       raise 'test action requires specifying a scheme' unless scheme
       raise 'cannot specify both a scheme and targets' if scheme && target
 
-      desc 'test application'
+      desc @description
       task @name do
         if sdk == 'iphonesimulator'
           add_build_setting('CODE_SIGN_IDENTITY', '""')
@@ -276,6 +278,7 @@ module XCJobs
   class Build < Xcodebuild
     def initialize(name = :build)
       super
+      @description = 'build application'
       yield self if block_given?
       define
     end
@@ -289,7 +292,7 @@ module XCJobs
       CLEAN.include(build_dir) if build_dir
       CLOBBER.include(build_dir) if build_dir
 
-      desc 'build application'
+      desc @description
       task @name do
         add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
         add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
@@ -305,6 +308,7 @@ module XCJobs
 
     def initialize(name = :archive)
       super
+      @description = 'make xcarchive'
       yield self if block_given?
       define
     end
@@ -320,7 +324,7 @@ module XCJobs
         CLOBBER.include(build_dir)
       end
 
-      desc 'make xcarchive'
+      desc @description
       namespace :build do
         task @name do
           add_build_setting('CONFIGURATION_TEMP_DIR', File.join(build_dir, 'temp')) if build_dir
@@ -363,6 +367,7 @@ module XCJobs
     def initialize(name = :export)
       super
       self.unsetenv_others = true
+      @description = 'export from an archive'
       @export_format = 'IPA'
       yield self if block_given?
       define
@@ -388,7 +393,7 @@ module XCJobs
     private
 
     def define
-      desc 'export from an archive'
+      desc @description
       namespace :build do
         task name do
           run(['xcodebuild', '-exportArchive'] + options)
