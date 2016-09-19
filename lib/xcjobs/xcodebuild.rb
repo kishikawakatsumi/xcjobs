@@ -221,16 +221,14 @@ module XCJobs
         if product_type == 'com.apple.product-type.framework' || product_type == 'com.apple.product-type.application'
           if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
             executable_name = settings['EXECUTABLE_NAME']
-            target_path = Dir.glob(File.join(objroot, '/**/' +executable_name)).first
           else
             executable_name = product_type == 'com.apple.product-type.application' ? settings['EXECUTABLE_PATH'] : settings['EXECUTABLE_NAME']
-            target_path = Dir.glob(File.join(objroot, '/**/' +executable_name)).select { |f| File.stat(f).file? }.first
           end
+          target_path = Dir.glob(File.join(objroot, '/**/' +executable_name)).select { |f| File.stat(f).file? }.first
         elsif
           raise %[Product type (PRODUCT_TYPE) '#{product_type}' is unsupported.]
         end
         
-        puts target_path
         profdata_path = Dir.glob(File.join(objroot, '/**/Coverage.profdata')).first
         
         show_coverage(profdata_path, target_path)
