@@ -258,12 +258,7 @@ module XCJobs
       raise 'cannot specify both a scheme and targets' if scheme && target
 
       desc @description
-      task @name do
-        if sdk == 'iphonesimulator'
-          add_build_setting('CODE_SIGN_IDENTITY', '""')
-          add_build_setting('CODE_SIGNING_REQUIRED', 'NO')
-        end
-        
+      task @name do        
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
         run(['xcodebuild', 'test'] + options)
