@@ -34,6 +34,8 @@ module XCJobs
       
       @name = name
       @destinations = []
+      @only_testings = []
+      @skip_testings = []
       @build_settings = {}
       @unsetenv_others = false
     end
@@ -69,6 +71,14 @@ module XCJobs
 
     def add_destination(destination)
       @destinations << destination
+    end
+
+    def add_only_testing(only_testing)
+      @only_testings << only_testing
+    end
+
+    def add_skip_testing(skip_testing)
+      @skip_testings << skip_testing
     end
 
     def add_build_setting(setting, value)
@@ -135,6 +145,13 @@ module XCJobs
 
         @destinations.each do |destination|
           opts.concat(['-destination', destination])
+        end
+
+        @only_testings.each do |only_testing|
+          opts.concat(["-only-testing:#{only_testing}"])
+        end
+        @skip_testings.each do |skip_testing|
+          opts.concat(["-skip-testing:#{skip_testing}"])
         end
 
         @build_settings.each do |setting, value|
