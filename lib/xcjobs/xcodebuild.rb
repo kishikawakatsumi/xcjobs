@@ -36,6 +36,7 @@ module XCJobs
       @destinations = []
       @only_testings = []
       @skip_testings = []
+      @build_options = {}
       @build_settings = {}
       @unsetenv_others = false
     end
@@ -79,6 +80,10 @@ module XCJobs
 
     def add_skip_testing(skip_testing)
       @skip_testings << skip_testing
+    end
+
+    def add_build_option(option, value)
+      @build_options[option] = value
     end
 
     def add_build_setting(setting, value)
@@ -154,6 +159,9 @@ module XCJobs
           opts.concat(["-skip-testing:#{skip_testing}"])
         end
 
+        @build_options.each do |option, value|
+          opts.concat([option, value])
+        end
         @build_settings.each do |setting, value|
           opts << "#{setting}=#{value}"
         end
