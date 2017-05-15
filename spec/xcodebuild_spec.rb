@@ -104,7 +104,7 @@ describe XCJobs::Xcodebuild do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            expect(@commands).to eq ['xcodebuild test -project Example.xcodeproj -scheme Example -sdk iphonesimulator -configuration Debug -destination name=iPhone 6,OS=8.1 -destination name=iPhone 6 Plus,OS=8.1 -destination name=iPad 2,OS=7.1 -destination name=iPad Air,OS=8.1 CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO GCC_SYMBOLS_PRIVATE_EXTERN=NO']
+            expect(@commands).to eq ['xcodebuild test -project Example.xcodeproj -scheme Example -sdk iphonesimulator -configuration Debug -destination name=iPhone 6,OS=8.1 -destination name=iPhone 6 Plus,OS=8.1 -destination name=iPad 2,OS=7.1 -destination name=iPad Air,OS=8.1 GCC_SYMBOLS_PRIVATE_EXTERN=NO']
           end
         end
       end
@@ -144,7 +144,7 @@ describe XCJobs::Xcodebuild do
 
           it 'executes the appropriate commands' do
             subject.invoke
-            expect(@commands).to eq ['xcodebuild test -workspace Example.xcworkspace -scheme Example -sdk iphonesimulator -configuration Debug -destination name=iPhone 6,OS=8.1 -destination name=iPhone 6 Plus,OS=8.1 -destination name=iPad 2,OS=7.1 -destination name=iPad Air,OS=8.1 CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO GCC_SYMBOLS_PRIVATE_EXTERN=NO']
+            expect(@commands).to eq ['xcodebuild test -workspace Example.xcworkspace -scheme Example -sdk iphonesimulator -configuration Debug -destination name=iPhone 6,OS=8.1 -destination name=iPhone 6 Plus,OS=8.1 -destination name=iPad 2,OS=7.1 -destination name=iPad Air,OS=8.1 GCC_SYMBOLS_PRIVATE_EXTERN=NO']
           end
         end
       end
