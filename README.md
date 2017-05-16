@@ -1,6 +1,5 @@
 # XCJobs
 [![Gem Version](https://badge.fury.io/rb/xcjobs.svg)](http://badge.fury.io/rb/xcjobs)
-[![Circle CI](https://circleci.com/gh/kishikawakatsumi/xcjobs.svg?style=svg)](https://circleci.com/gh/kishikawakatsumi/xcjobs)
 [![Build Status](https://travis-ci.org/kishikawakatsumi/xcjobs.svg?branch=master)](https://travis-ci.org/kishikawakatsumi/xcjobs)
 [![Coverage Status](https://img.shields.io/coveralls/kishikawakatsumi/xcjobs.svg)](https://coveralls.io/r/kishikawakatsumi/xcjobs?branch=master)
 [![Code Climate](https://codeclimate.com/github/kishikawakatsumi/xcjobs/badges/gpa.svg)](https://codeclimate.com/github/kishikawakatsumi/xcjobs)
