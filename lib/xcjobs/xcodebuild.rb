@@ -31,7 +31,7 @@ module XCJobs
 
     def initialize(name)
       $stdout.sync = $stderr.sync = true
-      
+
       @name = name
       @destinations = []
       @only_testings = []
@@ -186,66 +186,30 @@ module XCJobs
     end
 
     private
-    
-    def show_coverage(profdata_path, target_path)
+
+    def show_coverage_report(profdata_path, target_path)
       cmd = ['xcrun', 'llvm-cov', 'report']
       opts = ['-instr-profile', profdata_path, target_path, '-use-color=0']
-      puts (cmd + opts).join(" ")
-      out, status = Open3.capture2(*(cmd + opts))
-      out.lines.each do |line|
-        puts line
-      end
+      sh *(cmd + opts)
     end
-    
-    def generate_gcov_file(profdata_path, target_path)
-      puts 'Generage gcov file...'
+
+    def build_coverage_report(profdata_path, target_path)
       gcov_file = {}
       source_path = ''
-      
+
       cmd = ['xcrun', 'llvm-cov', 'show']
       opts = ['-instr-profile', profdata_path, target_path, '-use-color=0']
-      
-      out, status = Open3.capture2(*(cmd + opts))
-      out.lines.each do |line|
-        match = /^(['"]?(?:\/[^\/]+)*['"]?):$/.match(line)
-        if match.to_a.count > 0
-          source_path = match.to_a[1]
-          gcov_file[source_path] = []
-          next
-        end
-        
-        match = /^[ ]*([0-9]+|[ ]+)\|[ ]*([0-9]+)\|(.*)$/.match(line)
-        next unless match.to_a.count == 4
-        count, number, text = match.to_a[1..3]
-        
-        execution_count = case count.strip
-            when ''
-              '-'.rjust(5)
-            when '0'
-              '#####'
-            else count
-            end
-        gcov_file[source_path] << "#{execution_count.rjust(5)}:#{number.rjust(5)}:#{text}"
-      end
-      
-      gcov_file.each do |key, value|
-        gcon_path = File.join(File.dirname(profdata_path), "#{SecureRandom.urlsafe_base64(6)}-#{File.basename(target_path)}.gcov")
-        file = File::open(gcon_path, "w")
-        file.puts("#{'-'.rjust(5)}:#{'0'.rjust(5)}:Source:#{key}")
-        file.puts(value)
-        file.flush
-      end
+
+      sh *(cmd + opts)
     end
-    
+
     def coverage_report(options)
       settings = build_settings(options)
-      
-      xcode_version = `xcodebuild -version`.split("\n").first.scan(/\d+/).join('.')
-      
+
       targetSettings = settings.select { |key, _| settings[key]['PRODUCT_TYPE'] != 'com.apple.product-type.bundle.unit-test' }
       targetSettings.each do |target, settings|
         objroot = settings['OBJROOT']
-        
+
         product_type = settings['PRODUCT_TYPE']
         if product_type == 'com.apple.product-type.framework' || product_type == 'com.apple.product-type.application'
           if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
@@ -257,17 +221,17 @@ module XCJobs
         elsif
           raise %[Product type (PRODUCT_TYPE) '#{product_type}' is unsupported.]
         end
-        
+
         profdata_path = Dir.glob(File.join(objroot, '/**/Coverage.profdata')).first
-        
-        show_coverage(profdata_path, target_path)
-        generate_gcov_file(profdata_path, target_path)
+
+        show_coverage_report(profdata_path, target_path)
+        build_coverage_report(profdata_path, target_path)
       end
     end
-    
+
     def build_settings(options)
       out, status = Open3.capture2(*(['xcodebuild', 'test'] + options + ['-showBuildSettings']))
-      
+
       settings, target = {}, nil
       out.lines.each do |line|
         case line
@@ -287,25 +251,26 @@ module XCJobs
       raise 'cannot specify both a scheme and targets' if scheme && target
 
       desc @description
-      task @name do        
+      task @name do
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
-        run(['xcodebuild', without_building ? 'test-without-building' : 'test'] + options)
+        run(['xcodebuild', command] + options)
 
         if coverage_enabled
           coverage_report(options)
         end
       end
     end
+
+    def command
+      'test'
+    end
   end
 
   class Build < Xcodebuild
-    attr_accessor :for_testing
-
     def initialize(name = :build)
       super
       @description ||= 'build application'
-      @for_testing = false
       yield self if block_given?
       define
     end
@@ -325,8 +290,28 @@ module XCJobs
         add_build_setting('CODE_SIGN_IDENTITY', signing_identity) if signing_identity
         add_build_setting('PROVISIONING_PROFILE', provisioning_profile_uuid) if provisioning_profile_uuid
 
-        run(['xcodebuild', for_testing ? 'build-for-testing' : 'build'] + options)
+        run(['xcodebuild', command] + options)
       end
+    end
+
+    def command
+      'build'
+    end
+  end
+
+  class TestWithoutBuilding < Build
+    private
+
+    def command
+      'test-without-building'
+    end
+  end
+
+  class BuildForTesting < Build
+    private
+
+    def command
+      'build-for-testing'
     end
   end
 
