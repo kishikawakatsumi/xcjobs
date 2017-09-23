@@ -39,6 +39,7 @@ module XCJobs
       @build_options = {}
       @build_settings = {}
       @unsetenv_others = false
+      @description = Rake.application.last_description # nil or given from "desc"
     end
 
     def project
@@ -174,7 +175,7 @@ module XCJobs
 
     def initialize(name = :test)
       super
-      @description = 'test application'
+      @description ||= 'test application'
       @without_building = false
       yield self if block_given?
       define
@@ -303,7 +304,7 @@ module XCJobs
 
     def initialize(name = :build)
       super
-      @description = 'build application'
+      @description ||= 'build application'
       @for_testing = false
       yield self if block_given?
       define
@@ -334,7 +335,7 @@ module XCJobs
 
     def initialize(name = :archive)
       super
-      @description = 'make xcarchive'
+      @description ||= 'make xcarchive'
       yield self if block_given?
       define
     end
@@ -393,7 +394,7 @@ module XCJobs
     def initialize(name = :export)
       super
       self.unsetenv_others = true
-      @description = 'export from an archive'
+      @description ||= 'export from an archive'
       @export_format = 'IPA'
       yield self if block_given?
       define
