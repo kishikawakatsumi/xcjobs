@@ -22,6 +22,7 @@ module XCJobs
     attr_accessor :build_dir
     attr_accessor :coverage
     attr_accessor :formatter
+    attr_accessor :hide_shell_script_environment
 
     attr_reader :destinations
     attr_reader :provisioning_profile_name
@@ -148,6 +149,7 @@ module XCJobs
         opts.concat(['-configuration', configuration]) if configuration
         opts.concat(['-enableCodeCoverage', 'YES']) if coverage_enabled
         opts.concat(['-derivedDataPath', build_dir]) if build_dir
+        opts.concat(['-hideShellScriptEnvironment']) if hide_shell_script_environment
 
         @destinations.each do |destination|
           opts.concat(['-destination', destination])
@@ -187,48 +189,6 @@ module XCJobs
 
     private
 
-    def show_coverage_report(profdata_path, target_path)
-      cmd = ['xcrun', 'llvm-cov', 'report']
-      opts = ['-instr-profile', profdata_path, target_path, '-use-color=0']
-      sh *(cmd + opts)
-    end
-
-    def build_coverage_report(profdata_path, target_path)
-      gcov_file = {}
-      source_path = ''
-
-      cmd = ['xcrun', 'llvm-cov', 'show']
-      opts = ['-instr-profile', profdata_path, target_path, '-use-color=0']
-
-      sh *(cmd + opts)
-    end
-
-    def coverage_report(options)
-      settings = build_settings(options)
-
-      targetSettings = settings.select { |key, _| settings[key]['PRODUCT_TYPE'] != 'com.apple.product-type.bundle.unit-test' }
-      targetSettings.each do |target, settings|
-        objroot = settings['OBJROOT']
-
-        product_type = settings['PRODUCT_TYPE']
-        if product_type == 'com.apple.product-type.framework' || product_type == 'com.apple.product-type.application'
-          if sdk.start_with?('iphone') && settings['ONLY_ACTIVE_ARCH'] == 'NO'
-            executable_name = settings['EXECUTABLE_NAME']
-          else
-            executable_name = product_type == 'com.apple.product-type.application' ? settings['EXECUTABLE_PATH'] : settings['EXECUTABLE_NAME']
-          end
-          target_path = Dir.glob(File.join(objroot, '/**/' +executable_name)).select { |f| File.stat(f).file? }.first
-        elsif
-          raise %[Product type (PRODUCT_TYPE) '#{product_type}' is unsupported.]
-        end
-
-        profdata_path = Dir.glob(File.join(objroot, '/**/Coverage.profdata')).first
-
-        show_coverage_report(profdata_path, target_path)
-        build_coverage_report(profdata_path, target_path)
-      end
-    end
-
     def build_settings(options)
       out, status = Open3.capture2(*(['xcodebuild', 'test'] + options + ['-showBuildSettings']))
 
@@ -255,10 +215,6 @@ module XCJobs
         add_build_setting('GCC_SYMBOLS_PRIVATE_EXTERN', 'NO')
 
         run(['xcodebuild', command] + options)
-
-        if coverage_enabled
-          coverage_report(options)
-        end
       end
     end
 
